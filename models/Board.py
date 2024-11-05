@@ -19,45 +19,45 @@ class Board:
         self.board = None
         self.initBoard()
 
-    def get_board(self):
+    def get_board(self) -> array:
         """
             Getter of the board attribute
         """
         return self.board
 
-    def set_board(self, board: array):
+    def set_board(self, board: array) -> None:
         """
             Setter of the board attribute
         """
         self.board = board
 
-    def get_board_size(self):
+    def get_board_size(self) -> int:
         """
             Getter of the boardSize attribute
         """
         return self.boardSize
 
-    def set_board_size(self, size: int):
+    def set_board_size(self, size: int) -> None:
         """
             Setter of the boardSize attribute
         """
         self.boardSize = size
         self.initBoard()
 
-    def get_board_value(self, x: int, y: int):
+    def get_board_value(self, x: int, y: int) -> int:
         return self.board[x][y]
 
-    def set_board_value(self, x: int, y: int, value: int):
+    def set_board_value(self, x: int, y: int, value: int) -> None:
         self.board[x][y] = value
 
-    def initBoard(self):
+    def initBoard(self) -> None:
         """
             Initializes the board with boardSize x boardSize dimensions
         """
         self.board = [[0 for _ in range(self.boardSize)] for _ in range(self.boardSize)]
         self.fillBoard()
 
-    def fillBoard(self):
+    def fillBoard(self) -> None:
         """
             Fills the board with 0's
         """
@@ -65,7 +65,7 @@ class Board:
             for j in range(self.boardSize):
                 self.board[i][j] = 0
 
-    def is_valid_move(self, x, y):
+    def is_valid_move(self, x, y) -> bool:
         """
             Checks if the move is within bounds and the cell is empty.
         """
@@ -73,7 +73,7 @@ class Board:
             return self.board[x][y] == 0
         return False
 
-    def display_board(self):
+    def display_board(self) -> None:
         """
             Displays the board in a readable format.
         """
