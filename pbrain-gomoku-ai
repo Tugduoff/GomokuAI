@@ -7,10 +7,12 @@
 # pbrain-gomoku-ai
 #
 
-import sys
+from models.Board import Board
 
 def main():
-    print('Hello, World!')
+    board = Board()
+
+    board.display_board()
 
 if __name__ == '__main__':
     main()
