@@ -76,7 +76,7 @@
              *
              * @param std::map<std::string, int8_t> infoDict
              */
-            void infoCommand(std::string info)
+            void infoCommand(std::string)
             {
                 return;
             }
