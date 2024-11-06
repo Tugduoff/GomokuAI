@@ -21,6 +21,7 @@
           pkg-config
 
           python3
+          doxygen
         ];
 
         shellHook = ''
