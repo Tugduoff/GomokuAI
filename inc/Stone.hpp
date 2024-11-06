@@ -19,7 +19,7 @@ namespace Gomoku {
     /**
      * @brief Enum for the color of the stone
      */
-    enum Color {
+    enum class Color : uint8_t {
         BLACK,
         WHITE,
         NONE
