@@ -34,11 +34,11 @@ int main(void)
             // Gomoku::Stone stone(pos, ia.getColor());
             // board.board[x][y] = stone;
 
-            // ia.turn();
+            // ia.turn(board);
         } else if (cmd == "BEGIN") {
             // ia.setColor(Gomoku::Color::BLACK);
 
-            // ia.turn();
+            // ia.turn(board);
         } else if (cmd == "BOARD") {
             board = Gomoku::Board();
             while (1) {
@@ -56,7 +56,7 @@ int main(void)
                 // Gomoku::Stone stone(pos, ia.getColor(color));
                 // board.board[x][y] = stone;
 
-                // ia.turn();
+                // ia.turn(board);
             }
         } else if (cmd == "INFO") {
             std::string key;
