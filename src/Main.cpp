@@ -36,7 +36,6 @@ int main(void)
 
             // ia.turn();
         } else if (cmd == "BEGIN") {
-            std::cout << "10, 10" << std::endl;
             // ia.setColor(Gomoku::Color::BLACK);
 
             // ia.turn();
