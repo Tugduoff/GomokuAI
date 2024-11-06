@@ -22,7 +22,7 @@ int main(void)
 
         if (cmd == "START") {
             uint8_t size = 20;
-            std::cin >> size;
+            std::cin >> size; // Not used yet
 
             std::cout << "OK" << std::endl;
         } else if (cmd == "TURN") {
@@ -30,37 +30,33 @@ int main(void)
             uint8_t y = 0;
 
             std::cin >> x >> y;
-            Gomoku::Position pos(x, y);
-            // Gomoku::Stone stone(pos, ia.getColor());
-            // board.board[x][y] = stone;
+
+            // board.board[x][y] = 2; // enemy move
 
             // ia.turn(board);
         } else if (cmd == "BEGIN") {
-            // ia.setColor(Gomoku::Color::BLACK);
-
             // ia.turn(board);
         } else if (cmd == "BOARD") {
-            board = Gomoku::Board();
+            std::string line;
+            uint8_t x = 0;
+            uint8_t y = 0;
+            uint8_t color = 0;
+
+            board = Gomoku::Board(); // Reset the board
             while (1) {
-                std::string line;
                 std::cin >> line;
-                if (line == "DONE") {
+                if (line == "DONE")
                     break;
-                }
-                uint8_t x = 0;
-                uint8_t y = 0;
-                uint8_t color = 0;
 
                 std::cin >> x >> y >> color;
-                Gomoku::Position pos(x, y);
-                // Gomoku::Stone stone(pos, ia.getColor(color));
-                // board.board[x][y] = stone;
 
-                // ia.turn(board);
+                board.board[x][y] = color; // enemy or player move (1 or 2)
+
             }
+            // ia.turn(board);
         } else if (cmd == "INFO") {
             std::string key;
-            int value;
+            uint64_t value;
 
             if (key == "folder") {
                 std::string folder;
