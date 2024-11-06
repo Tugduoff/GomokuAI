@@ -1,8 +1,7 @@
 /*
-** EPITECH PROJECT, 2024
-** *
+** EPITECH PROJECT: Gomoku, 2024
 ** File description:
-** AI
+** AI class
 */
 
 #ifndef AI_HPP
@@ -24,56 +23,13 @@ namespace Gomoku {
              * @brief Construct a new AI object
              *
              */
-            AI(Board _board) : _board(_board)
-            {
-                _color = Color::NONE;
-            }
+            AI() = default;
 
             /**
              * @brief Destroy the AI object
              *
              */
-            ~AI();
-
-            /**
-             * @brief Set the color of the AI
-             *
-             * @param Color color
-             */
-            void setColor(Color color)
-            {
-                _color = color;
-            }
-
-            /**
-             * @brief Get the color of the AI
-             *
-             * @return Color
-             */
-            Color getColor(void) const
-            {
-                return _color;
-            }
-
-            /**
-             * @brief Get the board object
-             *
-             * @return Board
-             */
-            Board getBoard(void) const
-            {
-                return _board;
-            }
-
-            /**
-             * @brief Set the board object
-             *
-             * @param Board board
-             */
-            void setBoard(Board board)
-            {
-                _board = board;
-            }
+            ~AI() = default;
 
             /**
              * @brief Turn of the AI \n
@@ -98,10 +54,11 @@ namespace Gomoku {
                 std::cout << x << "," << y << std::endl;
             }
 
+            // Attributes
+            Board _board;
+
         protected:
         private:
-            Board _board;
-            Color _color;
     };
 };
 
