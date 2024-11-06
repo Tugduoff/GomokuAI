@@ -11,7 +11,7 @@ BASE_SRC =
 
 
 SRC	=	$(BASE_SRC)							\
-		src/main.cpp						\
+		src/Main.cpp						\
 
 TEST	=
 
@@ -29,7 +29,7 @@ INCLUDE_PATH = -I ./inc -I ./
 
 ERROR_FLAGS	=	-W -Wall -Wextra -Wshadow
 
-CFLAGS = $(INCLUDE_PATH) $(ERROR_FLAGS) -g -lcrypto
+CFLAGS = $(INCLUDE_PATH) $(ERROR_FLAGS) -g
 
 NAME	=	pbrain-gomoku-ai
 
