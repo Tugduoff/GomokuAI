@@ -33,7 +33,8 @@ namespace Gomoku {
     class Stone {
         public:
 
-            Stone(Position pos, Color color) : pos(pos), color(color) {};
+            Stone() = default;
+            Stone(Position stonePos, Color stoneColor) : pos(stonePos), color(stoneColor) {};
             ~Stone() = default;
 
             Position pos;

@@ -18,7 +18,9 @@ namespace Gomoku {
      */
     class Position {
         public:
-            Position(uint8_t x, uint8_t y) : x(x), y(y) {};
+
+            Position() = default;
+            Position(uint8_t posX, uint8_t posY) : x(posX), y(posY) {};
             ~Position() = default;
 
             uint8_t x;
