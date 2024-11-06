@@ -8,8 +8,6 @@
 #ifndef BOARD_HPP_
     #define BOARD_HPP_
 
-    #include "Stone.hpp"
-
 namespace Gomoku {
     /**
      * @brief Class for the board
@@ -18,10 +16,16 @@ namespace Gomoku {
      */
     class Board {
         public:
-            Board() = default;
+            Board() {
+                for (uint8_t i = 0; i < 20; i++) {
+                    for (uint8_t j = 0; j < 20; j++) {
+                        board[i][j] = 3; // Default value for empty cell
+                    }
+                }
+            };
             ~Board() = default;
 
-            Stone board[20][20];
+            uint8_t board[20][20];
         protected:
         private:
     };
