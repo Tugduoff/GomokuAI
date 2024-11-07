@@ -55,7 +55,7 @@ namespace Gomoku {
             }
 
             // Attributes
-            Board _board;
+            Board board;
 
         protected:
         private:
