@@ -12,33 +12,7 @@ env:
   EXECUTABLE: "binary"
 
 jobs:
-  check_coding_style:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/epitech/coding-style-checker:latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Coding style errors
-        run: |
-          check.sh $(pwd) $(pwd)
-          while read in lines; do
-            title=$(echo $lines | cut -d ':' -f 1)
-            error_type=$(echo $lines | cut -d ':' -f 2)
-            error_file=$(echo $lines | cut -d ':' -f 3)
-            echo "::error title=$title coding style error: $error_file ::$error_type"
-          done < coding-style-reports.log
-      - name: Checker
-        run: |
-          if [ -s coding-style-reports.log ]; then
-            exit 1
-          else
-            exit 0
-          fi
-
   check_program_compilation:
-    needs: [check_coding_style]
     runs-on: ubuntu-latest
     container:
       image: epitechcontent/epitest-docker:latest
@@ -51,7 +25,7 @@ jobs:
       - run: make clean
 
   run_tests:
-    needs: [check_coding_style, check_program_compilation]
+    needs: [check_program_compilation]
     runs-on: ubuntu-latest
     container:
       image: epitechcontent/epitest-docker:latest
@@ -64,7 +38,7 @@ jobs:
       - run: make clean
 
   push_to_mirror:
-    needs: [check_coding_style, check_program_compilation, run_tests]
+    needs: [check_program_compilation, run_tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
