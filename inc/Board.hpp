@@ -8,6 +8,8 @@
 #ifndef BOARD_HPP_
     #define BOARD_HPP_
 
+    #include <cstdint>
+
 namespace Gomoku {
     /**
      * @brief Class for the board
