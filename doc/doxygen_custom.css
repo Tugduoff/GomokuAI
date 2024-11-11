@@ -541,7 +541,7 @@ a.anchor {
     padding: 0 var(--spacing-large);
 }
 
-td {
+#titlearea > table > tbody > tr > td[colspan="2"] {
     display: flex;
 }
 
