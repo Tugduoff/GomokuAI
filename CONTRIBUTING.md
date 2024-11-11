@@ -29,6 +29,7 @@ If you respected all the conditions listed, one of the current maintainers of th
 
 - 👷 `:construction_worker:` : Add or update automation tools
 - 💚 `:green_heart:` : Fix CI build
+- ❄️ `:snowflake:` : Flake modifications
 
 ### Code changes
 - ✨ `:sparkles:` : New feature of the project

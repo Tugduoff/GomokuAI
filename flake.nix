@@ -20,7 +20,6 @@
           bashInteractiveFHS
           pkg-config
 
-          python3
           doxygen
         ];
 
