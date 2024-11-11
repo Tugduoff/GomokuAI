@@ -32,26 +32,29 @@ namespace Gomoku {
             ~AI() = default;
 
             /**
-             * @brief Turn of the AI \n
+             * @brief Turn of the AI
              * Coordinates are given by the bot for the next move
              */
-            void turnCommand()
+            void turn()
             {
-                uint8_t x {0};
-                uint8_t y {0};
+                uint8_t x = 0;
+                uint8_t y = 0;
 
-                // For testing purposes, we will just return the first empty cell //
-                for (uint8_t i = 0; i < 20; i++) {
-                    for (uint8_t j = 0; j < 20; j++) {
-                        if (_board.board[i][j].color == Color::NONE) {
-                            x = i;
-                            y = j;
-                            break;
-                        }
+                while (board.board[x][y] != 0) {
+                    x++;
+                    if (x == 20) {
+                        x = 0;
+                        y++;
+                    }
+                    if (y == 20) {
+                        std::cout << "ERROR can't find any position in my board" << std::endl;
+                        return;
                     }
                 }
-                ////
-                std::cout << x << "," << y << std::endl;
+                board.board[x][y] = 1;
+                std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
+
+                std::cout << (int)x << "," << (int)y << std::endl;
             }
 
             // Attributes
