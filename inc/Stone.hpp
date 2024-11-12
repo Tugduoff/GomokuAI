@@ -20,9 +20,10 @@ namespace Gomoku {
      * @brief Enum for the color of the stone
      */
     enum class Color : uint8_t {
-        BLACK,
-        WHITE,
-        NONE
+        AI = 1,
+        ENEMY = 2,
+        OUT_OF_BOUND = 4,
+        EMPTY = 0
     };
 
     /**
@@ -43,6 +44,26 @@ namespace Gomoku {
         protected:
         private:
     };
+
+    std::ostream &operator<<(std::ostream &os, const Color &color) {
+        switch (color) {
+            case Color::AI:
+                os << "X";
+                break;
+            case Color::ENEMY:
+                os << "O";
+                break;
+            case Color::OUT_OF_BOUND:
+                os << "#";
+                break;
+            case Color::EMPTY:
+                os << "+";
+                break;
+            default:
+                os << "@";
+        }
+        return os;
+    }
 };
 
 #endif // STONE_HPP_
