@@ -668,14 +668,14 @@ namespace Gomoku {
             int minMax(Board board, Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
                 int score = evaluateBoard();
 
-                if (depth == 0 || score == std::numeric_limits<int>::max() || score == std::numeric_limits<int>::min())
+                if (depth == 0 || score == 1000000 || score == -1000000)
                     return score;
                 if (isMaximizing) {
                     int bestScore = std::numeric_limits<int>::min();
                     for (uint8_t x = 0; x < 20; ++x) {
                         for (uint8_t y = 0; y < 20; ++y) {
-                            if (exploratingBoard.board[x][y] == 1) {
-                                board.board[x][y] = 1;
+                            if (exploratingBoard.board[x][y] == 3) {
+                                board.board[x][y] = 2;
                                 int res = minMax(board, exploratingBoard, depth - 1, false, alpha, beta);
                                 board.board[x][y] = 0;
                                 bestScore = std::max(res, bestScore);
@@ -690,8 +690,8 @@ namespace Gomoku {
                     int bestScore = std::numeric_limits<int>::max();
                     for (uint8_t x = 0; x < 20; ++x) {
                         for (uint8_t y = 0; y < 20; ++y) {
-                            if (exploratingBoard.board[x][y] == 1) {
-                                board.board[x][y] = 2;
+                            if (exploratingBoard.board[x][y] == 3) {
+                                board.board[x][y] = 1;
                                 int res = minMax(board, exploratingBoard, depth - 1, true, alpha, beta);
                                 board.board[x][y] = 0;
                                 bestScore = std::min(res, bestScore);
@@ -715,25 +715,23 @@ namespace Gomoku {
                 int bestScore = std::numeric_limits<int>::min();
                 Position bestMove;
 
+                bestMove = Position(0, 0);
                 for (uint8_t x = 0; x < 20; ++x) {
                     for (uint8_t y = 0; y < 20; ++y) {
-                        if (board.board[x][y] == 0) {
-                            // tmp //
-                            auto exploratingBoard = board;
-                            // --- //
+                        if (searchBoard.board[x][y] == 3) {
                             board.board[x][y] = 1;
-                            int score = minMax(board, exploratingBoard, 1, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+                            int score = minMax(board, searchBoard, 2, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
                             board.board[x][y] = 0;
                             if (score > bestScore) {
                                 bestScore = score;
                                 bestMove = Position(x, y);
+                            }
                         }
                     }
-                }
+                };
                 std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << std::endl;
                 return bestMove;
             }
-        };
     };
 };
 
