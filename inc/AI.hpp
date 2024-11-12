@@ -54,38 +54,6 @@ namespace Gomoku {
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
                 int status = evaluateBoard();
                 std::cout << (int)x << "," << (int)y << std::endl;
-
-                // DISPLAY SEARCH BOARD
-                for (int i = 0; i < 20; ++i) {
-                    if (i == 0) {
-                        // Display the y axis
-                        std::cout << "    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19" << std::endl;
-                    }
-                    for (int j = 0; j < 20; ++j) {
-                        if (j == 0) {
-                            // Display the x axis
-                            if (i < 10)
-                                std::cout << " " << i << "  ";
-                            else
-                                std::cout << i << "  ";
-                        }
-                        switch (searchBoard.board[i][j]) {
-                            case 0:
-                                std::cout << "+  ";
-                                break;
-                            case 1:
-                                std::cout << "X  ";
-                                break;
-                            case 2:
-                                std::cout << "O  ";
-                                break;
-                            case 3:
-                                std::cout << "#  ";
-                                break;
-                        }
-                    }
-                    std::cout << std::endl;
-                }
             }
 
             /**
@@ -99,12 +67,63 @@ namespace Gomoku {
              */
             void addToSearchBoard(uint8_t x, uint8_t y, uint8_t color) {
                 std::cout << "DEBUG Adding pos : " << (int)x << "," << (int)y << " to search board" << std::endl;
-                searchBoard.board[x][y] = color;
+                searchBoard.board[x][y] = color + 3;
                 for (int i = -1; i <= 1; ++i) {
                     for (int j = -1; j <= 1; ++j) {
                         if (x + i >= 0 && x + i < 20 && y + j >= 0 && y + j < 20 && searchBoard.board[x + i][y + j] == 0)
                             searchBoard.board[x + i][y + j] = 3;
                     }
+                }
+                displaySearchBoard();
+            }
+
+            void displaySearchBoard() {
+                // DISPLAY SEARCH BOARD
+                for (int i = 0; i < 20; ++i) {
+                    std::cout << "DEBUG | ";
+                    if (i == 0) {
+                        // Display the y axis
+                        std::cout << "    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19" << std::endl;
+                        std::cout << "DEBUG | ";
+                    }
+                    for (int j = 0; j < 20; ++j) {
+                        if (j == 0) {
+                            // Display the x axis
+                            if (i < 10)
+                                std::cout << " " << i << "  ";
+                            else
+                                std::cout << i << "  ";
+                        }
+                        switch (searchBoard.board[i][j]) {
+                            case 0:
+                                // Color gray
+                                std::cout << "\033[90m+  \033[0m"; // Gray
+                                break;
+                            case 1:
+                                // Color red
+                                std::cout << "\033[91mX  \033[0m"; // Red
+                                break;
+                            case 2:
+                                // Color blue
+                                std::cout << "\033[94mO  \033[0m"; // Blue
+                                break;
+                            case 3:
+                                // Color white
+                                std::cout << "\033[97m#  \033[0m"; // White
+                                break;
+                            case 4:
+                                // Color green
+                                std::cout << "\033[92mX  \033[0m"; // Green
+                                searchBoard.board[i][j] = 1;
+                                break;
+                            case 5:
+                                // Color green
+                                std::cout << "\033[92mO  \033[0m"; // Green
+                                searchBoard.board[i][j] = 2;
+                                break;
+                        }
+                    }
+                    std::cout << std::endl;
                 }
             }
 
@@ -660,6 +679,16 @@ namespace Gomoku {
                             }
                         }
                         board.board[x][y] = 0;
+                    }
+                }
+                if (bestScore == std::numeric_limits<int>::min()) {
+                    while (true) {
+                        uint8_t x = rand() % 20;
+                        uint8_t y = rand() % 20;
+                        if (board.board[x][y] == 0) {
+                            bestMove = Position(x, y);
+                            break;
+                        }
                     }
                 }
                 std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << std::endl;
