@@ -504,7 +504,6 @@ namespace Gomoku {
                     idx++;
                 }
 
-
                 // Check for D2 patterns
                 // Check for W2 patterns
                 // Check for S2 patterns
