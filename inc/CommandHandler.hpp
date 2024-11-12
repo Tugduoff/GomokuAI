@@ -9,6 +9,8 @@
 
     #include <sstream>
     #include <functional>
+    #include <vector>
+    #include <string>
     #include "AI.hpp"
 
 namespace Gomoku {
@@ -30,13 +32,37 @@ namespace Gomoku {
             }) {}
 
             void execute(const std::string &cmd) {
-                auto it = __commands.find(cmd);
+                std::vector<std::string> args = split(cmd, ' ');
+                std::string command = args[0];
+                std::string cmdArgs = args[1];
+
+                auto it = __commands.find(command);
 
                 if (it != __commands.end()) {
                     it->second();
                 } else {
-                    handleUnknown(cmd);
+                    handleUnknown(command);
                 }
+            }
+
+            /**
+             * @brief Split a string
+             *
+             * This function splits a string by a delimiter
+             *
+             * @param str The string to split
+             * @param delimiter The delimiter
+             * @return std::vector<std::string> The splitted string
+             */
+            std::vector<std::string> split(const std::string &str, char delimiter) {
+                std::vector<std::string> tokens;
+                std::string token;
+                std::stringstream ss(str);
+
+                while (std::getline(ss, token, delimiter)) {
+                    tokens.push_back(token);
+                }
+                return tokens;
             }
 
         private:
