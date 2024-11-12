@@ -733,6 +733,7 @@ namespace Gomoku {
                 std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << std::endl;
                 return bestMove;
             }
+        };
     };
 };
 
