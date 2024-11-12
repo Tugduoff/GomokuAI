@@ -397,10 +397,8 @@ namespace Gomoku {
                         isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy) &&
                         isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
                     
-                    // Simple case where 3 stones are in a row and there is at least one side where
-                    // there are two empty spaces and the other side has one empty space
-                    if ((threeInRow && beforeEmpty && isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy)) ||
-                        (threeInRow && afterEmpty && isEmpty(stone.pos.x - dx, stone.pos.y - dy))) {
+                    // Simple case where 3 stones are in a row and there are two empty spaces on each side
+                    if ((threeInRow && beforeEmpty && afterEmpty)) {
                         std::cout << "DEBUG Found a D3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "D3";
                         return 1000;
@@ -423,7 +421,90 @@ namespace Gomoku {
                 }
 
                 // Check for W3 patterns
+                idx = 0;
+                for (const auto &stone : positions) {
+                    if (stone.color != (Color)color) {
+                        idx++;
+                        continue;
+                    }
+                    bool threeInRow = checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 3);
+                    bool beforeEmpty =
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
+                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy);
+                    bool afterEmpty =
+                        isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy) &&
+                        isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
+                    
+                    // Simple case where 3 stones are in a row and there is one side where
+                    // there are two empty spaces and the other side has one empty space
+                    if ((threeInRow && beforeEmpty && isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy)) ||
+                        (threeInRow && afterEmpty && isEmpty(stone.pos.x - dx, stone.pos.y - dy))) {
+                        std::cout << "DEBUG Found a W3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        std::get<4>(line) = "W3";
+                        return 500;
+                    }
+
+                    // We need at least 5 positions to check for a trigger,
+                    // so we skip the last 4 positions
+                    if (idx >= 5) {
+                        idx++;
+                        continue;
+                    }
+
+                    beforeEmpty = isEmpty(stone.pos.x - dx, stone.pos.y - dy);
+                    afterEmpty = isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
+
+                    bool threeInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 1);
+                    if (threeInRowWithTrigger && beforeEmpty && afterEmpty) {
+                        std::cout << "DEBUG Found a W3 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        std::get<4>(line) = "W3 Trigger";
+                        return 500;
+                    }
+                    idx++;
+                }
+
                 // Check for S3 patterns
+                idx = 0;
+                for (const auto &stone : positions) {
+                    if (stone.color != (Color)color) {
+                        idx++;
+                        continue;
+                    }
+                    bool threeInRow = checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 3);
+                    bool beforeEmpty =
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
+                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy);
+                    bool afterEmpty =
+                        isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy) &&
+                        isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
+                    
+                    // Simple case where 3 stones are in a row and there are two empty spaces on each side
+                    if (((threeInRow && beforeEmpty) || (threeInRow && afterEmpty))) {
+                        std::cout << "DEBUG Found a S3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        std::get<4>(line) = "S3";
+                        return 100;
+                    }
+
+                    // Check if the stone is the first of the line
+                    if (idx >= 5) {
+                        idx++;
+                        continue;
+                    }
+
+                    beforeEmpty = isEmpty(stone.pos.x - dx, stone.pos.y - dy);
+                    afterEmpty = isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
+
+                    // Case where the stones have a trigger but not at the end or the beginning
+                    bool threeInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 1);
+                    if ((threeInRowWithTrigger && beforeEmpty) || (threeInRowWithTrigger && afterEmpty)) {
+                        std::cout << "DEBUG Found a S3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        std::get<4>(line) = "S3 Trigger";
+                        return 100;
+                    }
+                    idx++;
+                }
+
+
                 // Check for D2 patterns
                 // Check for W2 patterns
                 // Check for S2 patterns
