@@ -575,6 +575,62 @@ namespace Gomoku {
             }
 
             /**
+             * @brief Minimax algorithm- elegage Alpha-Beta pruning. \n
+             * 
+             * This function is a recursive function that will explore the board and return the score of the board.
+             * The first part of the function is for the maximizing player (AI) \n
+             * and the second part is for the minimizing player (Enemy)
+             *
+             * @param board : the board to evaluate
+             * @param exploratingBoard : the board to explore where 1 is the cell to explore
+             * @param depth : the depth of the search
+             * @param isMaximizing : if the AI is maximizing or minimizing
+             * @param alpha : the alpha value
+             * @param beta : the beta value
+             * @return int : the score of the board
+             */
+            int minMax(Board board, Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
+                int score = evaluateBoard();
+
+                if (depth == 0 || score == std::numeric_limits<int>::max() || score == std::numeric_limits<int>::min())
+                    return score;
+                if (isMaximizing) {
+                    int bestScore = std::numeric_limits<int>::min();
+                    for (uint8_t x = 0; x < 20; ++x) {
+                        for (uint8_t y = 0; y < 20; ++y) {
+                            if (exploratingBoard.board[x][y] == 1) {
+                                board.board[x][y] = 1;
+                                int score = minMax(board, exploratingBoard, depth - 1, false, alpha, beta);
+                                board.board[x][y] = 0;
+                                bestScore = std::max(score, bestScore);
+                                alpha = std::max(alpha, bestScore);
+                                if (beta <= alpha)
+                                    break;
+                            }
+                        }
+                    }
+                    return bestScore;
+                } else {
+                    int bestScore = std::numeric_limits<int>::max();
+                    for (uint8_t x = 0; x < 20; ++x) {
+                        for (uint8_t y = 0; y < 20; ++y) {
+                            if (exploratingBoard.board[x][y] == 1) {
+                                board.board[x][y] = 2;
+                                int score = minMax(board, exploratingBoard, depth - 1, true, alpha, beta);
+                                board.board[x][y] = 0;
+                                bestScore = std::min(score, bestScore);
+                                beta = std::min(beta, bestScore);
+                                if (beta <= alpha)
+                                    break;
+                            }
+                        }
+                    }
+                    return bestScore;
+                }
+                return 0;
+            }
+
+            /**
              * @brief Get the best move for the AI
              * 
              * @return Position : the best move for the AI
@@ -586,22 +642,15 @@ namespace Gomoku {
                 for (uint8_t x = 0; x < 20; ++x) {
                     for (uint8_t y = 0; y < 20; ++y) {
                         if (board.board[x][y] == 0) {
+                            // tmp //
+                            auto exploratingBoard = board;
+                            // --- //
                             board.board[x][y] = 1;
-                            // Simulate enemy move
-                            for (uint8_t x2 = 0; x2 < 20; ++x) {
-                                for (uint8_t y2 = 0; y2 < 20; ++y) {
-                                    if (board.board[x2][y2] == 0) {
-                                        board.board[x2][y2] = 2;
-                                        int score = evaluateBoard();
-                                        if (score > bestScore) {
-                                            bestScore = score;
-                                            bestMove = Position(x, y);
-                                        }
-                                        board.board[x2][y2] = 0;
-                                    }
-                                }
-                            }
+                            int score = minMax(board, exploratingBoard, 1, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
                             board.board[x][y] = 0;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestMove = Position(x, y);
                         }
                     }
                 }
