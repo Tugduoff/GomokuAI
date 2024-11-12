@@ -16,7 +16,10 @@ int main(void) {
     while (true) {
         std::cin.clear();
         cmd.clear();
-        std::cin >> cmd;
+        if (!(std::cin >> cmd)) {
+            std::cerr << "DEBUG End of input detected. Exiting" << std::endl;
+            break;
+        }
         handler.execute(cmd);
     }
     return 0;
