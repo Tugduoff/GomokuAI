@@ -236,7 +236,7 @@ namespace Gomoku {
                     score += std::get<0>(line) * colorMultiplier;
                 }
 
-                std::cout << "DEBUG Score: " << score << std::endl;
+                // std::cout << "DEBUG Score: " << score << std::endl;
 
                 // Sort the lines by color and then power
                 std::sort(lines.begin(), lines.end(), [](const auto &a, const auto &b) {
@@ -364,7 +364,7 @@ namespace Gomoku {
 
                     // Check if there are 5 stones in a row
                     if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 5)) {
-                        std::cout << "DEBUG Found a S5 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a S5 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "S5";
                         return 1000000;
                     }
@@ -383,7 +383,7 @@ namespace Gomoku {
 
                     // Simple case where all the stones are in a row
                     if (fourInRow && beforeEmpty && afterEmpty) {
-                        std::cout << "DEBUG Found a D4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a D4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "D4";
                         return 100000;
                     }
@@ -398,7 +398,7 @@ namespace Gomoku {
                     bool fourInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 9, 2);
                     bool lastStoneEmpty = isEmpty(stone.pos.x + 8 * dx, stone.pos.y + 8 * dy);
                     if (fourInRowWithTrigger && !lastStoneEmpty) {
-                        std::cout << "DEBUG Found a D4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a D4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "D4 Trigger";
                         return 100000;
                     }
@@ -416,7 +416,7 @@ namespace Gomoku {
                     bool beforeEmpty = isEmpty(stone.pos.x - dx, stone.pos.y - dy);
                     bool afterEmpty = isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
                     if ((fourInRow && beforeEmpty) || (fourInRow && afterEmpty)) {
-                        std::cout << "DEBUG Found a S4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a S4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "S4";
                         return 10000;
                     }
@@ -431,7 +431,7 @@ namespace Gomoku {
                     // Case where the stones have a trigger but not at the end or the beginning
                     bool fourInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 1);
                     if (fourInRowWithTrigger) {
-                        std::cout << "DEBUG Found a S4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a S4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "S4 Trigger";
                         return 10000;
                     }
@@ -455,7 +455,7 @@ namespace Gomoku {
 
                     // Simple case where 3 stones are in a row and there are two empty spaces on each side
                     if ((threeInRow && beforeEmpty && afterEmpty)) {
-                        std::cout << "DEBUG Found a D3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a D3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "D3";
                         return 1000;
                     }
@@ -469,7 +469,7 @@ namespace Gomoku {
                     // Case where the stones have a trigger but not at the end or the beginning
                     bool threeInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 9, 4);
                     if (threeInRowWithTrigger) {
-                        std::cout << "DEBUG Found a D3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a D3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "D3 Trigger";
                         return 1000;
                     }
@@ -495,7 +495,7 @@ namespace Gomoku {
                     // there are two empty spaces and the other side has one empty space
                     if ((threeInRow && beforeEmpty && isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy)) ||
                         (threeInRow && afterEmpty && isEmpty(stone.pos.x - dx, stone.pos.y - dy))) {
-                        std::cout << "DEBUG Found a W3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a W3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "W3";
                         return 500;
                     }
@@ -512,7 +512,7 @@ namespace Gomoku {
 
                     bool threeInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 1);
                     if (threeInRowWithTrigger && beforeEmpty && afterEmpty) {
-                        std::cout << "DEBUG Found a W3 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a W3 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "W3 Trigger";
                         return 500;
                     }
@@ -536,7 +536,7 @@ namespace Gomoku {
 
                     // Simple case where 3 stones are in a row and there are two empty spaces on each side
                     if (((threeInRow && beforeEmpty) || (threeInRow && afterEmpty))) {
-                        std::cout << "DEBUG Found a S3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a S3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "S3";
                         return 100;
                     }
@@ -553,7 +553,7 @@ namespace Gomoku {
                     // Case where the stones have a trigger but not at the end or the beginning
                     bool threeInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 1);
                     if ((threeInRowWithTrigger && beforeEmpty) || (threeInRowWithTrigger && afterEmpty)) {
-                        std::cout << "DEBUG Found a S3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        // std::cout << "DEBUG Found a S3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "S3 Trigger";
                         return 100;
                     }
@@ -662,6 +662,7 @@ namespace Gomoku {
                         board.board[x][y] = 0;
                     }
                 }
+                std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << std::endl;
                 return bestMove;
             }
     };
