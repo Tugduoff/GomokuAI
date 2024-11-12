@@ -57,9 +57,8 @@ namespace Gomoku {
                     }
                 }
                 board.board[x][y] = 1;
+                std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
                 int status = evaluateBoard();
-                std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << " new board status: " << status << std::endl;
-
                 std::cout << (int)x << "," << (int)y << std::endl;
             }
 
@@ -126,8 +125,8 @@ namespace Gomoku {
                 const int WIN_SCORE = 1000000;
                 const int LOSS_SCORE = -1000000;
                 int score = 0;
-                // linePower, color, direction, positions of the line
-                std::vector<std::tuple<int, uint8_t, uint8_t, std::array<Stone, 9>>> lines;
+                // linePower, color, direction, positions of the line, pattern : None, S5, D4, S4, D3, W3, S3, D2, W2, S2
+                std::vector<std::tuple<int, uint8_t, uint8_t, std::array<Stone, 9>, std::string>> lines;
 
                 for (uint8_t x = 0; x < 20; ++x) {
                     for (uint8_t y = 0; y < 20; ++y) {
@@ -142,7 +141,7 @@ namespace Gomoku {
                                 else
                                     positions[0][i + 4] = Stone(Position(posX, y), Color::OUT_OF_BOUND);
                             }
-                            lines.push_back(std::make_tuple(0, color, 1, positions[0]));
+                            lines.push_back(std::make_tuple(0, color, 1, positions[0], "None"));
 
                             // Vertical line
                             for (int i = -4; i <= 4; ++i) {
@@ -152,7 +151,7 @@ namespace Gomoku {
                                 else
                                     positions[1][i + 4] = Stone(Position(x, posY), Color::OUT_OF_BOUND);
                             }
-                            lines.push_back(std::make_tuple(1, color, 0, positions[1]));
+                            lines.push_back(std::make_tuple(1, color, 0, positions[1], "None"));
 
                             // Diagonal (\ direction)
                             for (int i = -4; i <= 4; ++i) {
@@ -163,7 +162,7 @@ namespace Gomoku {
                                 else
                                     positions[2][i + 4] = Stone(Position(posX, posY), Color::OUT_OF_BOUND);
                             }
-                            lines.push_back(std::make_tuple(2, color, 2, positions[2]));
+                            lines.push_back(std::make_tuple(2, color, 2, positions[2], "None"));
 
                             // Anti Diagonal (/ direction)
                             for (int i = -4; i <= 4; ++i) {
@@ -174,18 +173,41 @@ namespace Gomoku {
                                 else
                                     positions[3][i + 4] = Stone(Position(posX, posY), Color::OUT_OF_BOUND);
                             }
-                            lines.push_back(std::make_tuple(3, color, 3, positions[3]));
+                            lines.push_back(std::make_tuple(3, color, 3, positions[3], "None"));
                         }
                     }
                 }
-                for (auto &line : lines) {
-                    // Check if there is a pattern in the line to evaluate the power of the line
-                    std::get<0>(line) = checkPattern(line);
 
+                for (auto &line : lines) {
+                    std::get<0>(line) = checkPattern(line);
+                }
+
+                // Sort the lines by color and then power
+                std::sort(lines.begin(), lines.end(), [](const auto &a, const auto &b) {
+                    int colorA = std::get<1>(a);
+                    int colorB = std::get<1>(b);
+
+                    if (colorA != colorB) // First by color, AI first
+                        return colorA < colorB;
+
+                    int powerA = std::get<0>(a);
+                    int powerB = std::get<0>(b);
+
+                    if (powerA != powerB) // Then by power, descending
+                        return powerA > powerB;
+
+                    int directionA = std::get<2>(a);
+                    int directionB = std::get<2>(b);
+
+                    return directionA < directionB; // Finally by direction, alphabetical
+                });
+
+                for (auto &line : lines) {
                     int linePower = std::get<0>(line);
                     uint8_t color = std::get<1>(line);
                     uint8_t direction = std::get<2>(line);
                     std::array<Stone, 9> positions = std::get<3>(line);
+                    std::string &patternStr = std::get<4>(line);
 
                     // Convert direction to a readable format
                     std::string directionStr;
@@ -200,9 +222,10 @@ namespace Gomoku {
                     // Display the line information
                     std::cout << "DEBUG Line: " 
                             << (color == 1 ? "AI" : "ENEMY") 
-                            << " | Direction: " << directionStr 
-                            << " | Power: " << linePower 
-                            << " | Positions: ";
+                            << " | Dir: " << directionStr 
+                            << " | Pow: " << linePower 
+                            << " | Pat: " << patternStr
+                            << " | Pos: ";
 
                     // Display each stone in the line
                     for (const auto &stone : positions) {
@@ -248,7 +271,7 @@ namespace Gomoku {
              * 
              * No need to check for A4 patterns, as they are not useful
              */
-            int checkPattern(std::tuple<int, uint8_t, uint8_t, std::array<Stone, 9>> &line) {
+            int checkPattern(std::tuple<int, uint8_t, uint8_t, std::array<Stone, 9>, std::string> &line) {
                 // linePower, color, direction, positions of the line
                 uint8_t color = std::get<1>(line);
                 uint8_t direction = std::get<2>(line);
@@ -256,6 +279,7 @@ namespace Gomoku {
                 int dx = 0;
                 int dy = 0;
                 int idx = 0;
+                std::get<4>(line) = "None";
 
                 // Compute dx and dy based on the direction
                 switch (direction) {
@@ -284,7 +308,8 @@ namespace Gomoku {
 
                     // Check if there are 5 stones in a row
                     if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 5)) {
-                        std::cout << "DEBUG Found a S5 pattern in line:" << std::endl;
+                        std::cout << "DEBUG Found a S5 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        std::get<4>(line) = "S5";
                         return 1000000;
                     }
                 }
@@ -302,7 +327,8 @@ namespace Gomoku {
 
                     // Simple case where all the stones are in a row
                     if (fourInRow && beforeEmpty && afterEmpty) {
-                        std::cout << "DEBUG Found a D4 pattern in line:" << std::endl;
+                        std::cout << "DEBUG Found a D4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        std::get<4>(line) = "D4";
                         return 100000;
                     }
 
@@ -316,7 +342,8 @@ namespace Gomoku {
                     bool fourInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 9, 2);
                     bool lastStoneEmpty = isEmpty(stone.pos.x + 8 * dx, stone.pos.y + 8 * dy);
                     if (fourInRowWithTrigger && !lastStoneEmpty) {
-                        std::cout << "DEBUG Found a D4 pattern with a trigger in line:" << std::endl;
+                        std::cout << "DEBUG Found a D4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        std::get<4>(line) = "D4 Trigger";
                         return 100000;
                     }
                     idx++;
@@ -333,7 +360,8 @@ namespace Gomoku {
                     bool beforeEmpty = isEmpty(stone.pos.x - dx, stone.pos.y - dy);
                     bool afterEmpty = isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
                     if ((fourInRow && beforeEmpty) || (fourInRow && afterEmpty)) {
-                        std::cout << "DEBUG Found a S4 pattern in line:" << std::endl;
+                        std::cout << "DEBUG Found a S4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        std::get<4>(line) = "S4";
                         return 10000;
                     }
 
@@ -347,7 +375,8 @@ namespace Gomoku {
                     // Case where the stones have a trigger but not at the end or the beginning
                     bool fourInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 1);
                     if (fourInRowWithTrigger) {
-                        std::cout << "DEBUG Found a S4 pattern with a trigger in line:" << std::endl;
+                        std::cout << "DEBUG Found a S4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
+                        std::get<4>(line) = "S4 Trigger";
                         return 10000;
                     }
                     idx++;
@@ -372,7 +401,8 @@ namespace Gomoku {
                     // there are two empty spaces and the other side has one empty space
                     if ((threeInRow && beforeEmpty && isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy)) ||
                         (threeInRow && afterEmpty && isEmpty(stone.pos.x - dx, stone.pos.y - dy))) {
-                        std::cout << "DEBUG Found a D3 pattern in line:" << std::endl;
+                        std::cout << "DEBUG Found a D3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        std::get<4>(line) = "D3";
                         return 1000;
                     }
 
@@ -385,7 +415,8 @@ namespace Gomoku {
                     // Case where the stones have a trigger but not at the end or the beginning
                     bool threeInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 9, 4);
                     if (threeInRowWithTrigger) {
-                        std::cout << "DEBUG Found a D3 pattern with a trigger in line:" << std::endl;
+                        std::cout << "DEBUG Found a D3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
+                        std::get<4>(line) = "D3 Trigger";
                         return 1000;
                     }
                     idx++;
@@ -607,7 +638,6 @@ namespace Gomoku {
                     if (newX < 0 || newX >= 20 || newY < 0 || newY >= 20)
                         return false;
 
-                    std::cout << newX << " " << newY << std::endl;
                     if (board.board[newX][newY] == (uint8_t)Color::EMPTY) {
                         tFound++;
                     } else if (board.board[newX][newY] == color) {
