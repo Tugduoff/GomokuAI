@@ -12,6 +12,7 @@
     #include <algorithm>
     #include <tuple>
     #include <array>
+    #include <limits>
     #include "Position.hpp"
     #include "Stone.hpp"
     #include "Board.hpp"
@@ -729,6 +730,21 @@ namespace Gomoku {
                     return true;
                 return false;
             }
+
+            std::pair<uint8_t, uint8_t> getBestMove() {
+                int bestScore = std::numeric_limits<int>::min();
+                std::pair<uint8_t, uint8_t> bestMove = std::make_pair(0, 0);
+
+                for (uint8_t x = 0; x < 20; ++x) {
+                    for (uint8_t y = 0; y < 20; ++y) {
+                        if (board.board[x][y] == 0) {
+                            //
+                        }
+                    }
+                }
+                return bestMove;
+            }
+
     };
 };
 
