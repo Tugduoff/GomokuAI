@@ -43,20 +43,10 @@ namespace Gomoku {
              */
             void turn()
             {
-                uint8_t x = 0;
-                uint8_t y = 0;
+                Position bestMove = getBestMove();
+                uint8_t x = bestMove.x;
+                uint8_t y = bestMove.y;
 
-                while (board.board[x][y] != 0) {
-                    x++;
-                    if (x == 20) {
-                        x = 0;
-                        y++;
-                    }
-                    if (y == 20) {
-                        std::cout << "ERROR can't find any position in my board" << std::endl;
-                        return;
-                    }
-                }
                 board.board[x][y] = 1;
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
                 int status = evaluateBoard();
@@ -182,6 +172,14 @@ namespace Gomoku {
                 for (auto &line : lines) {
                     std::get<0>(line) = checkPattern(line);
                 }
+
+                // Get the total score of the board
+                for (auto &line : lines) {
+                    int colorMultiplier = std::get<1>(line) == 1 ? 1 : -1;
+                    score += std::get<0>(line) * colorMultiplier;
+                }
+
+                std::cout << "DEBUG Score: " << score << std::endl;
 
                 // Sort the lines by color and then power
                 std::sort(lines.begin(), lines.end(), [](const auto &a, const auto &b) {
@@ -579,22 +577,27 @@ namespace Gomoku {
             /**
              * @brief Get the best move for the AI
              * 
-             * @return std::pair<uint8_t, uint8_t> 
+             * @return Position : the best move for the AI
              */
-            std::pair<uint8_t, uint8_t> getBestMove() {
+            Position getBestMove() {
                 int bestScore = std::numeric_limits<int>::min();
-                std::pair<uint8_t, uint8_t> bestMove = std::make_pair(0, 0);
+                Position bestMove;
 
                 for (uint8_t x = 0; x < 20; ++x) {
                     for (uint8_t y = 0; y < 20; ++y) {
                         if (board.board[x][y] == 0) {
-                            
+                            board.board[x][y] = 1;
+                            int score = evaluateBoard();
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestMove = Position(x, y);
+                            }
+                            board.board[x][y] = 0;
                         }
                     }
                 }
                 return bestMove;
             }
-
     };
 };
 
