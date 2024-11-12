@@ -22,24 +22,24 @@ namespace Gomoku {
     class CommandHandler {
         public:
             CommandHandler(Gomoku::AI &ai) : __ai(ai), __commands({
-                {"START", [this]() { handleStart(); }},
-                {"TURN", [this]() { handleTurn(); }},
-                {"BEGIN", [this]() { handleBegin(); }},
-                {"BOARD", [this]() { handleBoard(); }},
-                {"INFO", [this]() { handleInfo(); }},
-                {"ABOUT", [this]() { handleAbout(); }},
-                {"END", [this]() { handleEnd(); }}
+                {"START", [this](std::string cmdArgs) { handleStart(cmdArgs); }},
+                {"TURN", [this](std::string cmdArgs) { handleTurn(cmdArgs); }},
+                {"BEGIN", [this](std::string cmdArgs) { handleBegin(cmdArgs); }},
+                {"BOARD", [this](std::string cmdArgs) { handleBoard(cmdArgs); }},
+                {"INFO", [this](std::string cmdArgs) { handleInfo(cmdArgs); }},
+                {"ABOUT", [this](std::string cmdArgs) { handleAbout(cmdArgs); }},
+                {"END", [this](std::string cmdArgs) { handleEnd(cmdArgs); }}
             }) {}
 
             void execute(const std::string &cmd) {
                 std::vector<std::string> args = split(cmd, ' ');
                 std::string command = args[0];
-                std::string cmdArgs = args[1];
+                std::string cmdArgs = args.size() > 1 ? args[1] : "";
 
                 auto it = __commands.find(command);
 
                 if (it != __commands.end()) {
-                    it->second();
+                    it->second(cmdArgs);
                 } else {
                     handleUnknown(command);
                 }
@@ -68,7 +68,7 @@ namespace Gomoku {
         private:
 
             Gomoku::AI &__ai;
-            std::unordered_map<std::string, std::function<void()>> __commands;
+             std::unordered_map<std::string, std::function<void(std::string)>> __commands;
 
             /**
              * @brief Handle the START command
@@ -78,9 +78,10 @@ namespace Gomoku {
              * Example: \n
              * START 20
              */
-            void handleStart() {
+            void handleStart(std::string cmdArgs) {
                 int size;
-                std::cin >> size;
+                std::istringstream iss(cmdArgs);
+
                 __ai.board = Gomoku::Board();
                 std::cout << "OK" << std::endl;
             }
@@ -95,7 +96,7 @@ namespace Gomoku {
              * 
              * @note The AI will note the enemy move and play its turn
              */
-            void handleTurn() {
+            void handleTurn(std::string cmdArgs) {
                 std::string args;
                 std::getline(std::cin >> std::ws, args);
 
@@ -121,7 +122,7 @@ namespace Gomoku {
              * Example: \n
              * BEGIN
              */
-            void handleBegin() {
+            void handleBegin(std::string cmdArgs) {
                 __ai.turn();
             }
 
@@ -145,7 +146,7 @@ namespace Gomoku {
              * 0 = Empty \n
              * 3 = Win Position
              */
-            void handleBoard() {
+            void handleBoard(std::string cmdArgs) {
                 __ai.board = Gomoku::Board();
 
                 std::string line;
@@ -174,7 +175,7 @@ namespace Gomoku {
              * INFO timeout_turn 100 \n
              * INFO max_memory 10000
              */
-            void handleInfo() {
+            void handleInfo(std::string cmdArgs) {
                 std::string key;
                 std::cin >> key;
 
@@ -198,7 +199,7 @@ namespace Gomoku {
              * Example: \n
              * ABOUT
              */
-            void handleAbout() {
+            void handleAbout(std::string cmdArgs) {
                 std::cout << "name=\"Centurion\", version=\"1.1\", author=\"Tugdu & Traz\", country=\"France\"" << std::endl;
             }
 
@@ -210,7 +211,7 @@ namespace Gomoku {
              * Example: \n
              * END
              */
-            void handleEnd() {
+            void handleEnd(std::string cmdArgs) {
                 exit(0);
             }
 
