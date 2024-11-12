@@ -43,64 +43,121 @@ namespace Gomoku {
              */
             void turn()
             {
+
                 Position bestMove = getBestMove();
                 uint8_t x = bestMove.x;
                 uint8_t y = bestMove.y;
 
                 board.board[x][y] = 1;
+
+                addToSearchBoard(x, y, 1);
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
                 int status = evaluateBoard();
                 std::cout << (int)x << "," << (int)y << std::endl;
+
+                // DISPLAY SEARCH BOARD
+                for (int i = 0; i < 20; ++i) {
+                    if (i == 0) {
+                        // Display the y axis
+                        std::cout << "    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19" << std::endl;
+                    }
+                    for (int j = 0; j < 20; ++j) {
+                        if (j == 0) {
+                            // Display the x axis
+                            if (i < 10)
+                                std::cout << " " << i << "  ";
+                            else
+                                std::cout << i << "  ";
+                        }
+                        switch (searchBoard.board[i][j]) {
+                            case 0:
+                                std::cout << "+  ";
+                                break;
+                            case 1:
+                                std::cout << "X  ";
+                                break;
+                            case 2:
+                                std::cout << "O  ";
+                                break;
+                            case 3:
+                                std::cout << "#  ";
+                                break;
+                        }
+                    }
+                    std::cout << std::endl;
+                }
+            }
+
+            /**
+             * @brief Add the 8 surrounding cells of a position given to the search board + the position itself
+             *
+             * the 8 surrounding cells are added as : 1
+             * the cell itself is added as : 2
+             *
+             * @param x : x position
+             * @param y : y position
+             */
+            void addToSearchBoard(uint8_t x, uint8_t y, uint8_t color) {
+                std::cout << "DEBUG Adding pos : " << (int)x << "," << (int)y << " to search board" << std::endl;
+                searchBoard.board[x][y] = color;
+                for (int i = -1; i <= 1; ++i) {
+                    for (int j = -1; j <= 1; ++j) {
+                        if (x + i >= 0 && x + i < 20 && y + j >= 0 && y + j < 20 && searchBoard.board[x + i][y + j] == 0)
+                            searchBoard.board[x + i][y + j] = 3;
+                    }
+                }
             }
 
             // Attributes
             Board board;
+            Board searchBoard; // Search board contains each cell to be evaluated
 
         protected:
         private:
-        
+
             // Threat score, threat stone positions
             std::vector<std::pair<int, std::vector<Position>>> __threats;
 
+
             /**
              * @brief Evaluate the board
-             * 
+             *
              * @return int
-             * 
+             *
              * This function evaluates the board and returns a score
              * If the score is positive, the AI is in a winning position
              * If the score is negative, the AI is in a losing position
-             * 
+             *
              * If the score is 1000000, the AI has won
              * If the score is -1000000, the AI has lost
-             * 
+             *
              * IGNORE THE FOLLOWING COMMENTARY, IT NEEDS TO BE UPDATED !!!
-            //  * 
+            //  *
             //  * The score is calculated by checking the threats of the AI and the enemy
             //  * Each threat score depends on the number of stones in a row it contains
-            //  * 
+            //  *
             //  * 1 stone in a row: 100 points
             //  * 2 stones in a row: 300 points
             //  * 3 stones in a row: 600 points
             //  * 4 stones in a row: 1000 points
             //  * 5 stones in a row is a win, so it won't be even computed
-            //  * 
+            //  *
             //  * For enemy threats, the score is the same but negative
             //  * 1 stone in a row: -100 points
             //  * 2 stones in a row: -300 points
             //  * 3 stones in a row: -600 points
             //  * 4 stones in a row: -1000 points
-            //  * 
+            //  *
             //  * The final score is the sum of all the threats in the board
-            //  * 
+            //  *
             //  * Example: \n
             //  * 1. 600 : (1,1) (1,2) (1,3) \n
             //  * 2. 300 : (5,1) (5,2) \n
             //  * 3. -1000 : (2,2) (2,3) (2,4) (2,5) \n
             //  * 4. -100 : (5,5)
-            //  * 
+            //  *
             //  * The final score will be [900 - 1100](-200). The AI is in a losing position
-            //  * 
+            //  *
             //  * Second example: \n
             //  * 1. 600 : (1,1) (1,2) (1,3) \n
             //  * 2. 1000 : (12,2) (12,3) (12,4) (12,5) \n
@@ -109,7 +166,7 @@ namespace Gomoku {
             //  * 5. -600 : (9,1) (9,2) (9,3) \n
             //  * 6. -600 : (7,1) (7,2) (7,3) \n
             //  * 7. -600 : (11,1) (11,2) (11,3) \n
-            //  * 
+            //  *
             //  * The final score will be [2600 - 2100](500). The AI is in a winning position
              */
             int evaluateBoard() {
@@ -201,73 +258,73 @@ namespace Gomoku {
                     return directionA < directionB; // Finally by direction, alphabetical
                 });
 
-                for (auto &line : lines) {
-                    int linePower = std::get<0>(line);
-                    uint8_t color = std::get<1>(line);
-                    uint8_t direction = std::get<2>(line);
-                    std::array<Stone, 9> positions = std::get<3>(line);
-                    std::string &patternStr = std::get<4>(line);
+                // for (auto &line : lines) {
+                //     int linePower = std::get<0>(line);
+                //     uint8_t color = std::get<1>(line);
+                //     uint8_t direction = std::get<2>(line);
+                //     std::array<Stone, 9> positions = std::get<3>(line);
+                //     std::string &patternStr = std::get<4>(line);
 
-                    // Convert direction to a readable format
-                    std::string directionStr;
-                    switch (direction) {
-                        case 0: directionStr = "Horizontal"; break;
-                        case 1: directionStr = "Vertical"; break;
-                        case 2: directionStr = "Diagonal \\"; break;
-                        case 3: directionStr = "Anti Diagonal /"; break;
-                        default: directionStr = "Unknown";
-                    }
+                //     // Convert direction to a readable format
+                //     std::string directionStr;
+                //     switch (direction) {
+                //         case 0: directionStr = "Horizontal"; break;
+                //         case 1: directionStr = "Vertical"; break;
+                //         case 2: directionStr = "Diagonal \\"; break;
+                //         case 3: directionStr = "Anti Diagonal /"; break;
+                //         default: directionStr = "Unknown";
+                //     }
 
-                    // Display the line information
-                    std::cout << "DEBUG Line: " 
-                            << (color == 1 ? "AI" : "ENEMY") 
-                            << " | Dir: " << directionStr 
-                            << " | Pow: " << linePower 
-                            << " | Pat: " << patternStr
-                            << " | Pos: ";
+                //     // Display the line information
+                //     std::cout << "DEBUG Line: "
+                //             << (color == 1 ? "AI" : "ENEMY")
+                //             << " | Dir: " << directionStr
+                //             << " | Pow: " << linePower
+                //             << " | Pat: " << patternStr
+                //             << " | Pos: ";
 
-                    // Display each stone in the line
-                    for (const auto &stone : positions) {
-                        std::cout << stone.color;
-                    }
-                    std::cout << std::endl;
-                }
+                //     // Display each stone in the line
+                //     for (const auto &stone : positions) {
+                //         std::cout << stone.color;
+                //     }
+                //     std::cout << std::endl;
+                // }
                 return score;
             }
 
             /**
              * @brief Check if there are any patterns in the line
-             * 
+             *
              * @param line : the line to check for patterns
-             * 
-             * The line contains : 
+             *
+             * The line contains :
              * - the power of the line (0 by default)
              * - the color of the line (who has the center stone)
              * - the direction of the line (0: horizontal, 1: vertical, 2: diagonal, 3: anti-diagonal)
              * - the positions of the line with their corresponding colors
-             * 
+             *
              * This function will check for patterns in the line and return the power of the line
              * For the patterns below, we will consider the following board:
              * X = AI, O = ENEMY, + = EMPTY, # = OUT_OF_BOUND
-             * 
+             *
              * This function, must be able to recognize the following patterns:
-             * 
+             *
              * S5 : simple five, 5 stones in a row : +OXXXXXOO, +OXXXXXX+ : 5 PX stones, V0
-             * 
+             *
              * Next patterns count 4 PX stones and are considered as an A1 pattern (win in 1 round, but not assured)
              * D4 : double four : +O+XXXX+O, XXX+X+XXX : 4 PX stones and 2 triggers, also called a V1 pattern (assured win in 1 round)
              * S4 : simple four : +O+XXXXOO, XXXOX+XXX : 4 PX stones and 1 trigger, not a V1 pattern
-             * 
+             *
              * Next patterns count 3 PX stones and are considered as an A2 pattern (win in 2 rounds, but not assured)
              * D3 : double three : +++XXX++O, +XX+X+XX+ : Turns into a D4 pattern, very powerful, V2 pattern (assured win in 2 rounds)
              * W3 : weak three : +O+XX+X+O, O+XXX+++O : Turns either into a D4 or S4 pattern depending on the enemy input
              * S3 : simple three : +O+XXX+OO, OOXXX+++O : Turns into a S4 pattern
-             * 
+             *
              * Next patterns count 2 PX stones and are considered as an A3 pattern (win in 3 rounds, but not assured)
              * D2 : double two : ++++XX++O, O++XX+++O : Turns into a D3 pattern, very powerful, V3 pattern (assured win in 3 rounds)
              * W2 : weak two : +O++XX++O, O++XX++OO : Turns into a W3 pattern
              * S2 : simple two : +O++XX+OO, OO+XX++OO : Turns into a S3 pattern, very weak pattern
-             * 
+             *
              * No need to check for A4 patterns, as they are not useful
              */
             int checkPattern(std::tuple<int, uint8_t, uint8_t, std::array<Stone, 9>, std::string> &line) {
@@ -395,7 +452,7 @@ namespace Gomoku {
                     bool afterEmpty =
                         isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy) &&
                         isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-                    
+
                     // Simple case where 3 stones are in a row and there are two empty spaces on each side
                     if ((threeInRow && beforeEmpty && afterEmpty)) {
                         std::cout << "DEBUG Found a D3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
@@ -433,7 +490,7 @@ namespace Gomoku {
                     bool afterEmpty =
                         isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy) &&
                         isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-                    
+
                     // Simple case where 3 stones are in a row and there is one side where
                     // there are two empty spaces and the other side has one empty space
                     if ((threeInRow && beforeEmpty && isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy)) ||
@@ -476,7 +533,7 @@ namespace Gomoku {
                     bool afterEmpty =
                         isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy) &&
                         isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-                    
+
                     // Simple case where 3 stones are in a row and there are two empty spaces on each side
                     if (((threeInRow && beforeEmpty) || (threeInRow && afterEmpty))) {
                         std::cout << "DEBUG Found a S3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
@@ -516,11 +573,11 @@ namespace Gomoku {
 
             /**
              * @brief Display the threats
-             * 
+             *
              * @param threats : the vector of threats
-             * 
+             *
              * This function displays the threats in the board in this format:
-             * 
+             *
              * DEBUG Threats:
              * DEBUG Threat score: [score](score of the threat, negative if it's a threat for the enemy) :
              *    [(x,y)](position of one of the threat stones)
@@ -576,7 +633,7 @@ namespace Gomoku {
 
             /**
              * @brief Get the best move for the AI
-             * 
+             *
              * @return Position : the best move for the AI
              */
             Position getBestMove() {
@@ -585,24 +642,24 @@ namespace Gomoku {
 
                 for (uint8_t x = 0; x < 20; ++x) {
                     for (uint8_t y = 0; y < 20; ++y) {
-                        if (board.board[x][y] == 0) {
-                            board.board[x][y] = 1;
-                            // Simulate enemy move
-                            for (uint8_t x2 = 0; x2 < 20; ++x) {
-                                for (uint8_t y2 = 0; y2 < 20; ++y) {
-                                    if (board.board[x2][y2] == 0) {
-                                        board.board[x2][y2] = 2;
-                                        int score = evaluateBoard();
-                                        if (score > bestScore) {
-                                            bestScore = score;
-                                            bestMove = Position(x, y);
-                                        }
-                                        board.board[x2][y2] = 0;
-                                    }
+                        if (searchBoard.board[x][y] != 3)
+                            continue;
+                        board.board[x][y] = 1;
+                        // Simulate enemy move
+                        for (uint8_t x2 = 0; x2 < 20; ++x2) {
+                            for (uint8_t y2 = 0; y2 < 20; ++y2) {
+                                if (searchBoard.board[x2][y2] != 3)
+                                    continue;
+                                board.board[x2][y2] = 2;
+                                int score = evaluateBoard();
+                                if (score > bestScore) {
+                                    bestScore = score;
+                                    bestMove = Position(x, y);
                                 }
+                                board.board[x2][y2] = 0;
                             }
-                            board.board[x][y] = 0;
                         }
+                        board.board[x][y] = 0;
                     }
                 }
                 return bestMove;

@@ -97,6 +97,7 @@ namespace Gomoku {
 
                 std::cout << "DEBUG Enemy played at " << x << "," << y << std::endl;
                 __ai.board.board[(uint8_t)x][(uint8_t)y] = 2;
+                __ai.addToSearchBoard((uint8_t)x, (uint8_t)y, 2);
                 __ai.turn();
             }
 
