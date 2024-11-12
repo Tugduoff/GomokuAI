@@ -587,10 +587,19 @@ namespace Gomoku {
                     for (uint8_t y = 0; y < 20; ++y) {
                         if (board.board[x][y] == 0) {
                             board.board[x][y] = 1;
-                            int score = evaluateBoard();
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestMove = Position(x, y);
+                            // Simulate enemy move
+                            for (uint8_t x2 = 0; x2 < 20; ++x) {
+                                for (uint8_t y2 = 0; y2 < 20; ++y) {
+                                    if (board.board[x2][y2] == 0) {
+                                        board.board[x2][y2] = 2;
+                                        int score = evaluateBoard();
+                                        if (score > bestScore) {
+                                            bestScore = score;
+                                            bestMove = Position(x, y);
+                                        }
+                                        board.board[x2][y2] = 0;
+                                    }
+                                }
                             }
                             board.board[x][y] = 0;
                         }
