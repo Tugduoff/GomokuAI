@@ -676,9 +676,9 @@ namespace Gomoku {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 1) {
                                 board.board[x][y] = 1;
-                                int score = minMax(board, exploratingBoard, depth - 1, false, alpha, beta);
+                                int res = minMax(board, exploratingBoard, depth - 1, false, alpha, beta);
                                 board.board[x][y] = 0;
-                                bestScore = std::max(score, bestScore);
+                                bestScore = std::max(res, bestScore);
                                 alpha = std::max(alpha, bestScore);
                                 if (beta <= alpha)
                                     break;
@@ -692,9 +692,9 @@ namespace Gomoku {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 1) {
                                 board.board[x][y] = 2;
-                                int score = minMax(board, exploratingBoard, depth - 1, true, alpha, beta);
+                                int res = minMax(board, exploratingBoard, depth - 1, true, alpha, beta);
                                 board.board[x][y] = 0;
-                                bestScore = std::min(score, bestScore);
+                                bestScore = std::min(res, bestScore);
                                 beta = std::min(beta, bestScore);
                                 if (beta <= alpha)
                                     break;
