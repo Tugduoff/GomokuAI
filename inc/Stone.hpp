@@ -45,6 +45,15 @@ namespace Gomoku {
         private:
     };
 
+    /**
+     * @brief Overload of the << operator for the Color enum
+     * 
+     * This function is used to display the color of the stone
+     * 
+     * @param os The output stream
+     * @param color The color to display
+     * @return std::ostream &The output stream
+     */
     std::ostream &operator<<(std::ostream &os, const Color &color) {
         switch (color) {
             case Color::AI:
