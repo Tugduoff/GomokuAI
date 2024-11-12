@@ -2,3 +2,4 @@
 .vscode
 *.exe
 pbrain-gomoku-ai
+doc/doxygen/
