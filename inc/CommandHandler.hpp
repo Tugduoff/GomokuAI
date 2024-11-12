@@ -56,7 +56,7 @@ namespace Gomoku {
                 int size = 0;
                 std::cin >> size;
                 if (size <= 0) {
-                    std::cerr << "ERROR Invalid board size" << std::endl;
+                    std::cout << "ERROR Invalid board size" << std::endl;
                     return;
                 }
                 __ai.board = Gomoku::Board();
@@ -82,16 +82,16 @@ namespace Gomoku {
                 std::istringstream iss(args);
 
                 if (!(iss >> x >> comma >> y) || comma != ',') {
-                    std::cerr << "ERROR Invalid TURN command format. Expected 'TURN X,Y'" << std::endl;
+                    std::cout << "ERROR Invalid TURN command format. Expected 'TURN X,Y'" << std::endl;
                     return;
                 }
                 if (x < 0 || x >= 20 || y < 0 || y >= 20) {
-                    std::cerr << "ERROR Invalid position" << std::endl;
+                    std::cout << "ERROR Invalid position" << std::endl;
                     return;
                 }
 
                 if (__ai.board.board[(uint8_t)x][(uint8_t)y] != 0) {
-                    std::cerr << "ERROR Position already played" << std::endl;
+                    std::cout << "ERROR Position already played" << std::endl;
                     return;
                 }
 
@@ -151,7 +151,7 @@ namespace Gomoku {
                     bool boardFormatIsValid =
                         (x < 0 || x >= 20 || y < 0 || y >= 20 || color > 3 || color < 0 || comma1 != ',' || comma2 != ',');
                     if (boardFormatIsValid) {
-                        std::cerr << "ERROR Invalid board data format." << std::endl;
+                        std::cout << "ERROR Invalid board data format." << std::endl;
                         continue;
                     }
                     __ai.board.board[x][y] = color;
@@ -218,7 +218,7 @@ namespace Gomoku {
              * @param cmd The unknown command
              */
             void handleUnknown(const std::string &cmd) {
-                std::cerr << "ERROR Unknown command \"" << cmd << "\"" << std::endl;
+                std::cout << "ERROR Unknown command \"" << cmd << "\"" << std::endl;
             }
     };
 };

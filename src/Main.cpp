@@ -17,7 +17,7 @@ int main(void) {
         std::cin.clear();
         cmd.clear();
         if (!(std::cin >> cmd)) {
-            std::cerr << "DEBUG End of input detected. Exiting" << std::endl;
+            std::cout << "DEBUG End of input detected. Exiting" << std::endl;
             break;
         }
         handler.execute(cmd);
