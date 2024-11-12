@@ -53,8 +53,12 @@ namespace Gomoku {
              * START 20
              */
             void handleStart() {
-                int size;
+                int size = 0;
                 std::cin >> size;
+                if (size <= 0) {
+                    std::cerr << "ERROR Invalid board size" << std::endl;
+                    return;
+                }
                 __ai.board = Gomoku::Board();
                 std::cout << "OK" << std::endl;
             }
@@ -79,6 +83,15 @@ namespace Gomoku {
 
                 if (!(iss >> x >> comma >> y) || comma != ',') {
                     std::cerr << "ERROR Invalid TURN command format. Expected 'TURN X,Y'" << std::endl;
+                    return;
+                }
+                if (x < 0 || x >= 20 || y < 0 || y >= 20) {
+                    std::cerr << "ERROR Invalid position" << std::endl;
+                    return;
+                }
+
+                if (__ai.board.board[(uint8_t)x][(uint8_t)y] != 0) {
+                    std::cerr << "ERROR Position already played" << std::endl;
                     return;
                 }
 
@@ -122,13 +135,22 @@ namespace Gomoku {
             void handleBoard() {
                 __ai.board = Gomoku::Board();
 
-                std::string line;
-                while (std::getline(std::cin, line)) {
-                    if (line == "DONE") break;
+                std::string line = "";
+                while (true) {
+                    std::getline(std::cin >> std::ws, line);
+                    if (line == "DONE")
+                        break;
+
+                    std::cout << "DEBUG " << line << std::endl;
 
                     std::istringstream iss(line);
                     int x, y, color;
-                    if (!(iss >> x >> y >> color)) {
+                    char comma1, comma2;
+                    iss >> x >> comma1 >> y >> comma2 >> color;
+
+                    bool boardFormatIsValid =
+                        (x < 0 || x >= 20 || y < 0 || y >= 20 || color > 3 || color < 0 || comma1 != ',' || comma2 != ',');
+                    if (boardFormatIsValid) {
                         std::cerr << "ERROR Invalid board data format." << std::endl;
                         continue;
                     }
