@@ -156,6 +156,7 @@ namespace Gomoku {
                         continue;
                     }
                     __ai.board.board[x][y] = color;
+                    __ai.addToSearchBoard(x, y, color);
                 }
                 __ai.turn();
             }
