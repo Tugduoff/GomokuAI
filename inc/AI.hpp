@@ -354,7 +354,6 @@ namespace Gomoku {
                 std::array<Stone, 9> positions = std::get<3>(line);
                 int dx = 0;
                 int dy = 0;
-                int idx = 0;
                 std::get<4>(line) = "None";
 
                 // Compute dx and dy based on the direction
@@ -367,10 +366,8 @@ namespace Gomoku {
 
                 // Start the pattern recognition...
                 for (const auto &stone : positions) {
-                    if (stone.color != (Color)color) {
-                        idx++;
+                    if (stone.color != (Color)color)
                         continue;
-                    }
 
                     // Check for S5 pattern : XXXXX
                     if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 5)) {
