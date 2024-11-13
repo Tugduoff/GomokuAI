@@ -565,17 +565,17 @@ namespace Gomoku {
                 return false;
             }
 
-            std::unordered_map<size_t, std::pair<uint8_t, uint8_t>> transpositionTable;
+            std::unordered_map<size_t, int> transpositionTable;
 
-            size_t hashBoard(const Board& board) {
-                size_t hash = 0;
-
-                for (uint8_t x = 0; x < 20; ++x) {
-                    for (uint8_t y = 0; y < 20; ++y) {
-                        hash ^= static_cast<size_t>(board.board[x][y]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+            size_t hashBoard(const Board& boardTmp) {
+                std::hash<std::string> hasher;
+                std::string boardString;
+                for (const auto& row : boardTmp.board) {
+                    for (const auto& cell : row) {
+                        boardString += std::to_string(cell);
                     }
                 }
-                return hash;
+                return hasher(boardString);
             }
 
             /**
@@ -585,7 +585,6 @@ namespace Gomoku {
              * The first part of the function is for the maximizing player (AI) \n
              * and the second part is for the minimizing player (Enemy)
              *
-             * @param board : the board to evaluate
              * @param exploratingBoard : the board to explore where 1 is the cell to explore
              * @param depth : the depth of the search
              * @param isMaximizing : if the AI is maximizing or minimizing
@@ -593,53 +592,75 @@ namespace Gomoku {
              * @param beta : the beta value
              * @return int : the score of the board
              */
-            int minMax(Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
+            int principalVariationSearch(Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
                 size_t boardHash = hashBoard(exploratingBoard);
-
-                //if (transpositionTable.count(boardHash) && transpositionTable[boardHash].first <= depth)
-                //    return transpositionTable[boardHash].second;
-
+                //if (transpositionTable.find(boardHash) != transpositionTable.end()) {
+                //    return transpositionTable[boardHash];
+                //}
                 int score = evaluateBoard();
 
-                if (depth == 0 || score >= 1000000 || score <= -1000000)
+                if (depth == 0 || score >= 1000000 || score <= -1000000) {
                     return score;
+                }
 
                 if (isMaximizing) {
-                    int bestScore = -1000000;
+                    bool firstChild = true;
                     for (uint8_t x = 0; x < 20; ++x) {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 3) {
                                 exploratingBoard.board[x][y] = 2;
-                                int res = minMax(exploratingBoard, depth - 1, false, alpha, beta);
+                                board.board[x][y] = 2;
+                                int res;
+                                if (firstChild) {
+                                    res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, beta);
+                                    firstChild = false;
+                                } else {
+                                    res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, alpha + 1);
+                                    if (res > alpha && res < beta) {
+                                        res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, beta);
+                                    }
+                                }
                                 exploratingBoard.board[x][y] = 3;
-                                bestScore = std::max(res, bestScore);
-                                alpha = std::max(alpha, bestScore);
-                                if (beta <= alpha)
-                                    break;
+                                board.board[x][y] = 0;
+                                alpha = std::max(alpha, res);
+                                if (alpha >= beta) {
+                                    transpositionTable[boardHash] = alpha;
+                                    return alpha;
+                                }
                             }
                         }
                     }
-                    if (!transpositionTable.count(boardHash) || transpositionTable[boardHash].first > depth)
-                        transpositionTable[boardHash] = {depth, bestScore};
-                    return bestScore;
+                    transpositionTable[boardHash] = alpha;
+                    return alpha;
                 } else {
-                    int bestScore = 1000000;
+                    bool firstChild = true;
                     for (uint8_t x = 0; x < 20; ++x) {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 3) {
                                 exploratingBoard.board[x][y] = 1;
-                                int res = minMax(exploratingBoard, depth - 1, true, alpha, beta);
+                                board.board[x][y] = 1;
+                                int res;
+                                if (firstChild) {
+                                    res = principalVariationSearch(exploratingBoard, depth - 1, true, alpha, beta);
+                                    firstChild = false;
+                                } else {
+                                    res = principalVariationSearch(exploratingBoard, depth - 1, true, beta - 1, beta);
+                                    if (res > alpha && res < beta) {
+                                        res = principalVariationSearch(exploratingBoard, depth - 1, true, alpha, beta);
+                                    }
+                                }
                                 exploratingBoard.board[x][y] = 3;
-                                bestScore = std::min(res, bestScore);
-                                beta = std::min(beta, bestScore);
-                                if (beta <= alpha)
-                                    break;
+                                board.board[x][y] = 0;
+                                beta = std::min(beta, res);
+                                if (alpha >= beta) {
+                                    transpositionTable[boardHash] = beta;
+                                    return beta;
+                                }
                             }
                         }
                     }
-                    if (!transpositionTable.count(boardHash) || transpositionTable[boardHash].first > depth)
-                        transpositionTable[boardHash] = {depth, bestScore};
-                    return bestScore;
+                    transpositionTable[boardHash] = beta;
+                    return beta;
                 }
             }
 
@@ -651,16 +672,17 @@ namespace Gomoku {
             Position getBestMove() {
                 int bestScore = -1000000;
                 Position bestMove;
-                int depth = 2;
+                int depth = 3;
 
                 for (uint8_t x = 0; x < 20; ++x) {
                     for (uint8_t y = 0; y < 20; ++y) {
                         if (searchBoard.board[x][y] == 3) {
                             searchBoard.board[x][y] = 1;
+                            board.board[x][y] = 1;
 
                             auto start = std::chrono::high_resolution_clock::now();
 
-                            int score = minMax(searchBoard, depth, false, -1000000, 1000000);
+                            int score = principalVariationSearch(searchBoard, depth, false, -1000000, 1000000);
 
                             auto end = std::chrono::high_resolution_clock::now();
                             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -673,6 +695,7 @@ namespace Gomoku {
                             << microseconds << "µs" << std::endl;
 
                             searchBoard.board[x][y] = 3;
+                            board.board[x][y] = 0;
                             if (score == bestScore) {
                                 if (rand() % 2 == 0) {
                                     bestScore = score;
