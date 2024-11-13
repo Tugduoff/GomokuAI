@@ -345,27 +345,7 @@ namespace Gomoku {
              *
              * This function will check for patterns in the line and return the power of the line
              * For the patterns below, we will consider the following board:
-             * X = AI, O = ENEMY, + = EMPTY, # = OUT_OF_BOUND
-             *
-             * This function, must be able to recognize the following patterns:
-             *
-             * S5 : simple five, 5 stones in a row : +OXXXXXOO, +OXXXXXX+ : 5 PX stones, V0
-             *
-             * Next patterns count 4 PX stones and are considered as an A1 pattern (win in 1 round, but not assured)
-             * D4 : double four : +O+XXXX+O, XXX+X+XXX : 4 PX stones and 2 triggers, also called a V1 pattern (assured win in 1 round)
-             * S4 : simple four : +O+XXXXOO, XXXOX+XXX : 4 PX stones and 1 trigger, not a V1 pattern
-             *
-             * Next patterns count 3 PX stones and are considered as an A2 pattern (win in 2 rounds, but not assured)
-             * D3 : double three : +++XXX++O, +XX+X+XX+ : Turns into a D4 pattern, very powerful, V2 pattern (assured win in 2 rounds)
-             * W3 : weak three : +O+XX+X+O, O+XXX+++O : Turns either into a D4 or S4 pattern depending on the enemy input
-             * S3 : simple three : +O+XXX+OO, OOXXX+++O : Turns into a S4 pattern
-             *
-             * Next patterns count 2 PX stones and are considered as an A3 pattern (win in 3 rounds, but not assured)
-             * D2 : double two : ++++XX++O, O++XX+++O, O++X+X++O : Turns into a D3 pattern
-             * W2 : weak two : +O++XX++O, O++XX++OO, +X+X++, ++X+X+ : Turns into a W3 pattern
-             * S2 : simple two : +O++XX+OO, OO+XX++OO : Turns into a S3 pattern, very weak pattern
-             *
-             * No need to check for A4 patterns, as they are not useful
+             * X = STONE, + = EMPTY
              */
             int checkPattern(std::tuple<int, uint8_t, uint8_t, std::array<Stone, 9>, std::string> &line) {
                 // linePower, color, direction, positions of the line
@@ -376,9 +356,6 @@ namespace Gomoku {
                 int dy = 0;
                 int idx = 0;
                 std::get<4>(line) = "None";
-                float colorMultiplier = color == 1 ? 1 : 2.1f;
-
-                // If line is enemy, it has more power since it's not a future threat, it's a current threat
 
                 // Compute dx and dy based on the direction
                 switch (direction) {
