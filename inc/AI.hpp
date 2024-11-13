@@ -43,7 +43,7 @@ namespace Gomoku {
              */
             void turn()
             {
-                int status = evaluateBoard(false);
+                int status = evaluateBoard(true);
                 std::cout << "DEBUG Status: " << status << std::endl;
                 if (status == std::numeric_limits<int>::max()) {
                     std::cout << "DEBUG WIN" << std::endl;
@@ -59,7 +59,7 @@ namespace Gomoku {
 
                 addToSearchBoard(x, y, 1);
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
-                status = evaluateBoard(false);
+                status = evaluateBoard(true);
                 std::cout << "DEBUG Status: " << status << std::endl;
                 if (status == std::numeric_limits<int>::max()) {
                     std::cout << "DEBUG WIN" << std::endl;
@@ -376,7 +376,7 @@ namespace Gomoku {
                 int dy = 0;
                 int idx = 0;
                 std::get<4>(line) = "None";
-                float colorMultiplier = color == 1 ? 1 : 2.0f;
+                float colorMultiplier = color == 1 ? 1 : 2.1f;
 
                 // If line is enemy, it has more power since it's not a future threat, it's a current threat
 
@@ -406,17 +406,17 @@ namespace Gomoku {
                         isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
                         isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy)) {
                         std::get<4>(line) = "D4";
-                        return 100000 * colorMultiplier;
+                        return 1000000;
                     }
                     // Check for S4 pattern : +XXXX
                     if (fourInRow && isEmpty(stone.pos.x - dx, stone.pos.y - dy)) {
                         std::get<4>(line) = "S4 1";
-                        return 90000 * colorMultiplier;
+                        return 1000000;
                     }
                     // Check for S4 patterns : X+XXX, XX+XX, XXX+X, XXXX+
                     if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 1)) {
                         std::get<4>(line) = "S4 2";
-                        return 90000 * colorMultiplier;
+                        return 1000000;
                     }
                     // Check for D3 pattern : ++XXX+
                     if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 3) &&
@@ -424,28 +424,38 @@ namespace Gomoku {
                         isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy)) {
                             if (isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy)) {
                                 std::get<4>(line) = "D3 1";
-                                return 50000 * colorMultiplier;
+                                if (color == 2)
+                                    return 100001;
+                                return 25000;
                             }
                         std::get<4>(line) = "S3 1";
-                        return 10000 * colorMultiplier;
+                        if (color == 2)
+                            return 10001;
+                        return 10000;
                     }
                     // Check for D3 patterns : +XXX++, +XX+X+, +X+XX+
                     if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 2) &&
                         isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
                         isEmpty(stone.pos.x + 5 * dx, stone.pos.y + 5 * dy)) {
                         std::get<4>(line) = "D3 2";
-                        return 50000 * colorMultiplier;
+                        if (color == 2)
+                            return 100001;
+                        return 25000;
                     }
                     // Check for S3 patterns : +XXX+, +X+XX, +XX+X
                     if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 1) &&
                         isEmpty(stone.pos.x - dx, stone.pos.y - dy)) {
                         std::get<4>(line) = "S3 2";
-                        return 10000 * colorMultiplier;
+                        if (color == 2)
+                            return 10001;
+                        return 10000;
                     }
                     // Check for S3 patterns : XXX++, XX++X, X++XX, X+XX+, X+X+X, XX+X+
                     if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 2)) {
                         std::get<4>(line) = "S3 3";
-                        return 10000 * colorMultiplier;
+                        if (color == 2)
+                            return 10001;
+                        return 10000;
                     }
                     // Check for D2 pattern : +++XX+
                     if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 2) &&
@@ -454,7 +464,9 @@ namespace Gomoku {
                         isEmpty(stone.pos.x - 3 * dx, stone.pos.y - 3 * dy) &&
                         isEmpty(stone.pos.x + 2 * dx, stone.pos.y + 2 * dy)) {
                         std::get<4>(line) = "D2 1";
-                        return 1000 * colorMultiplier;
+                        if (color == 2)
+                            return 4001;
+                        return 1000;
                     }
                     // Check for D2 patterns : ++XX++, ++X+X+
                     if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 2) &&
@@ -462,14 +474,18 @@ namespace Gomoku {
                         isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy) &&
                         isEmpty(stone.pos.x + 5 * dx, stone.pos.y + 5 * dy)) {
                         std::get<4>(line) = "D2 2";
-                        return 1000 * colorMultiplier;
+                        if (color == 2)
+                            return 4001;
+                        return 1000;
                     }
                     // Check for D2 patterns : +XX+++, +X+X++, +X++X+
                     if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 3) &&
                         isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
                         isEmpty(stone.pos.x + 5 * dx, stone.pos.y + 5 * dy)) {
                         std::get<4>(line) = "D2 3";
-                        return 1000 * colorMultiplier;
+                        if (color == 2)
+                            return 4001;
+                        return 1000;
                     }
                 }
                 return 0;
@@ -608,7 +624,7 @@ namespace Gomoku {
                     for (uint8_t y = 0; y < 20; ++y) {
                         if (searchBoard.board[x][y] == 3) {
                             board.board[x][y] = 1;
-                            int score = minMax(board, searchBoard, 2, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+                            int score = minMax(board, searchBoard, 3, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
                             board.board[x][y] = 0;
                             if (score == bestScore) {
                                 if (rand() % 2 == 0) {
@@ -623,8 +639,11 @@ namespace Gomoku {
                     }
                 };
                 std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << std::endl;
-                if (bestScore == std::numeric_limits<int>::min()) {
+                if (bestScore == std::numeric_limits<int>::min() && isEmpty(10, 10)) {
                     bestMove = Position(10, 10);
+                }
+                while (board.board[bestMove.x][bestMove.y] != 0) {
+                    bestMove = Position(rand() % 20, rand() % 20);
                 }
                 return bestMove;
             }
