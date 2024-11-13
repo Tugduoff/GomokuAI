@@ -596,8 +596,8 @@ namespace Gomoku {
             int minMax(Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
                 size_t boardHash = hashBoard(exploratingBoard);
 
-                if (transpositionTable.count(boardHash) && transpositionTable[boardHash].first <= depth)
-                    return transpositionTable[boardHash].second;
+                //if (transpositionTable.count(boardHash) && transpositionTable[boardHash].first <= depth)
+                //    return transpositionTable[boardHash].second;
 
                 int score = evaluateBoard();
 
@@ -605,7 +605,7 @@ namespace Gomoku {
                     return score;
 
                 if (isMaximizing) {
-                    int bestScore = std::numeric_limits<int>::min();
+                    int bestScore = -1000000;
                     for (uint8_t x = 0; x < 20; ++x) {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 3) {
@@ -623,7 +623,7 @@ namespace Gomoku {
                         transpositionTable[boardHash] = {depth, bestScore};
                     return bestScore;
                 } else {
-                    int bestScore = std::numeric_limits<int>::max();
+                    int bestScore = 1000000;
                     for (uint8_t x = 0; x < 20; ++x) {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 3) {
@@ -649,7 +649,7 @@ namespace Gomoku {
              * @return Position : the best move for the AI
              */
             Position getBestMove() {
-                int bestScore = std::numeric_limits<int>::min();
+                int bestScore = -1000000;
                 Position bestMove;
                 int depth = 2;
 
@@ -660,7 +660,7 @@ namespace Gomoku {
 
                             auto start = std::chrono::high_resolution_clock::now();
 
-                            int score = minMax(searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+                            int score = minMax(searchBoard, depth, false, -1000000, 1000000);
 
                             auto end = std::chrono::high_resolution_clock::now();
                             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
