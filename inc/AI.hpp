@@ -487,6 +487,40 @@ namespace Gomoku {
                             return 4001;
                         return 1000;
                     }
+                    // Check for S2 pattern : +++XX
+                    if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 2) &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
+                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy) &&
+                        isEmpty(stone.pos.x - 3 * dx, stone.pos.y - 3 * dy)) {
+                        std::get<4>(line) = "S2 1";
+                        if (color == 2)
+                            return 101;
+                        return 100;
+                    }
+                    // Check for S2 patterns : ++XX+, ++X+X
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 3, 1) &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
+                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy)) {
+                        std::get<4>(line) = "S2 2";
+                        if (color == 2)
+                            return 101;
+                        return 100;
+                    }
+                    // Check for S2 patterns : +XX++, +X+X+, +X++X
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 2) &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy)) {
+                        std::get<4>(line) = "S2 3";
+                        if (color == 2)
+                            return 101;
+                        return 100;
+                    }
+                    // Check for S2 patterns : XX+++, X+++X, X++X+, X+X++
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 3)) {
+                        std::get<4>(line) = "S2 4";
+                        if (color == 2)
+                            return 101;
+                        return 100;
+                    }
                 }
                 return 0;
             }
