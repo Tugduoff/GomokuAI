@@ -23,6 +23,10 @@ namespace Gomoku {
             Position(uint8_t posX, uint8_t posY) : x(posX), y(posY) {};
             ~Position() = default;
 
+            bool operator==(const Position &other) const {
+                return x == other.x && y == other.y;
+            }
+
             uint8_t x;
             uint8_t y;
         protected:

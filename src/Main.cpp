@@ -13,6 +13,8 @@ int main(void) {
     Gomoku::CommandHandler handler(ai);
     std::string cmd;
 
+    srand(time(NULL));
+
     while (true) {
         std::cin.clear();
         cmd.clear();
