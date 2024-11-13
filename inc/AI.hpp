@@ -14,6 +14,7 @@
     #include <array>
     #include <limits>
     #include <chrono>
+    #include <unordered_map>
     #include "Position.hpp"
     #include "Stone.hpp"
     #include "Board.hpp"
@@ -44,6 +45,13 @@ namespace Gomoku {
              */
             void turn()
             {
+                int status = evaluateBoard(true);
+                std::cout << "DEBUG Status: " << status << std::endl;
+                if (status == std::numeric_limits<int>::max()) {
+                    std::cout << "DEBUG WIN" << std::endl;
+                } else if (status == std::numeric_limits<int>::min()) {
+                    std::cout << "DEBUG LOSE" << std::endl;
+                }
 
                 Position bestMove = getBestMove();
                 uint8_t x = bestMove.x;
@@ -53,7 +61,13 @@ namespace Gomoku {
 
                 addToSearchBoard(x, y, 1);
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
-                int status = evaluateBoard();
+                status = evaluateBoard(true);
+                std::cout << "DEBUG Status: " << status << std::endl;
+                if (status == std::numeric_limits<int>::max()) {
+                    std::cout << "DEBUG WIN" << std::endl;
+                } else if (status == std::numeric_limits<int>::min()) {
+                    std::cout << "DEBUG LOSE" << std::endl;
+                }
                 std::cout << (int)x << "," << (int)y << std::endl;
             }
 
@@ -189,7 +203,7 @@ namespace Gomoku {
             //  *
             //  * The final score will be [2600 - 2100](500). The AI is in a winning position
              */
-            int evaluateBoard() {
+            int evaluateBoard(bool debug = false) {
                 const int WIN_SCORE = 1000000;
                 const int LOSS_SCORE = -1000000;
                 int score = 0;
@@ -253,6 +267,12 @@ namespace Gomoku {
                 // Get the total score of the board
                 for (auto &line : lines) {
                     int colorMultiplier = std::get<1>(line) == 1 ? 1 : -1;
+                    if (std::get<0>(line) == std::numeric_limits<int>::max()) {
+                        if (std::get<1>(line) == 1)
+                            return std::numeric_limits<int>::max();
+                        else
+                            return std::numeric_limits<int>::min();
+                    }
                     score += std::get<0>(line) * colorMultiplier;
                 }
 
@@ -278,37 +298,39 @@ namespace Gomoku {
                     return directionA < directionB; // Finally by direction, alphabetical
                 });
 
-                // for (auto &line : lines) {
-                //     int linePower = std::get<0>(line);
-                //     uint8_t color = std::get<1>(line);
-                //     uint8_t direction = std::get<2>(line);
-                //     std::array<Stone, 9> positions = std::get<3>(line);
-                //     std::string &patternStr = std::get<4>(line);
+                if (!debug)
+                    return score;
+                for (auto &line : lines) {
+                    int linePower = std::get<0>(line);
+                    uint8_t color = std::get<1>(line);
+                    uint8_t direction = std::get<2>(line);
+                    std::array<Stone, 9> positions = std::get<3>(line);
+                    std::string &patternStr = std::get<4>(line);
 
-                //     // Convert direction to a readable format
-                //     std::string directionStr;
-                //     switch (direction) {
-                //         case 0: directionStr = "Horizontal"; break;
-                //         case 1: directionStr = "Vertical"; break;
-                //         case 2: directionStr = "Diagonal \\"; break;
-                //         case 3: directionStr = "Anti Diagonal /"; break;
-                //         default: directionStr = "Unknown";
-                //     }
+                    // Convert direction to a readable format
+                    std::string directionStr;
+                    switch (direction) {
+                        case 0: directionStr = "Horizontal"; break;
+                        case 1: directionStr = "Vertical"; break;
+                        case 2: directionStr = "Diagonal \\"; break;
+                        case 3: directionStr = "Anti Diagonal /"; break;
+                        default: directionStr = "Unknown";
+                    }
 
-                //     // Display the line information
-                //     std::cout << "DEBUG Line: "
-                //             << (color == 1 ? "AI" : "ENEMY")
-                //             << " | Dir: " << directionStr
-                //             << " | Pow: " << linePower
-                //             << " | Pat: " << patternStr
-                //             << " | Pos: ";
+                    // Display the line information
+                    std::cout << "DEBUG Line: "
+                            << (color == 1 ? "AI" : "ENEMY")
+                            << " | Dir: " << directionStr
+                            << " | Pow: " << linePower * (color == 1 ? 1 : -1)
+                            << " | Pat: " << patternStr
+                            << " | Pos: ";
 
-                //     // Display each stone in the line
-                //     for (const auto &stone : positions) {
-                //         std::cout << stone.color;
-                //     }
-                //     std::cout << std::endl;
-                // }
+                    // Display each stone in the line
+                    for (const auto &stone : positions) {
+                        std::cout << stone.color;
+                    }
+                    std::cout << std::endl;
+                }
                 return score;
             }
 
@@ -325,27 +347,7 @@ namespace Gomoku {
              *
              * This function will check for patterns in the line and return the power of the line
              * For the patterns below, we will consider the following board:
-             * X = AI, O = ENEMY, + = EMPTY, # = OUT_OF_BOUND
-             *
-             * This function, must be able to recognize the following patterns:
-             *
-             * S5 : simple five, 5 stones in a row : +OXXXXXOO, +OXXXXXX+ : 5 PX stones, V0
-             *
-             * Next patterns count 4 PX stones and are considered as an A1 pattern (win in 1 round, but not assured)
-             * D4 : double four : +O+XXXX+O, XXX+X+XXX : 4 PX stones and 2 triggers, also called a V1 pattern (assured win in 1 round)
-             * S4 : simple four : +O+XXXXOO, XXXOX+XXX : 4 PX stones and 1 trigger, not a V1 pattern
-             *
-             * Next patterns count 3 PX stones and are considered as an A2 pattern (win in 2 rounds, but not assured)
-             * D3 : double three : +++XXX++O, +XX+X+XX+ : Turns into a D4 pattern, very powerful, V2 pattern (assured win in 2 rounds)
-             * W3 : weak three : +O+XX+X+O, O+XXX+++O : Turns either into a D4 or S4 pattern depending on the enemy input
-             * S3 : simple three : +O+XXX+OO, OOXXX+++O : Turns into a S4 pattern
-             *
-             * Next patterns count 2 PX stones and are considered as an A3 pattern (win in 3 rounds, but not assured)
-             * D2 : double two : ++++XX++O, O++XX+++O : Turns into a D3 pattern, very powerful, V3 pattern (assured win in 3 rounds)
-             * W2 : weak two : +O++XX++O, O++XX++OO : Turns into a W3 pattern
-             * S2 : simple two : +O++XX+OO, OO+XX++OO : Turns into a S3 pattern, very weak pattern
-             *
-             * No need to check for A4 patterns, as they are not useful
+             * X = STONE, + = EMPTY
              */
             int checkPattern(std::tuple<int, uint8_t, uint8_t, std::array<Stone, 9>, std::string> &line) {
                 // linePower, color, direction, positions of the line
@@ -354,236 +356,148 @@ namespace Gomoku {
                 std::array<Stone, 9> positions = std::get<3>(line);
                 int dx = 0;
                 int dy = 0;
-                int idx = 0;
                 std::get<4>(line) = "None";
 
                 // Compute dx and dy based on the direction
                 switch (direction) {
-                    case 0: dy = 1; break;
-                    case 1: dx = 1; break;
-                    case 2: dx = 1; dy = 1; break;
-                    case 3: dx = -1; dy = 1; break;
+                    case 0: dy = 1; break; // Vertical
+                    case 1: dx = 1; break; // Horizontal
+                    case 2: dx = 1; dy = 1; break; // Diagonal
+                    case 3: dx = 1; dy = -1; break; // Anti Diagonal
                 }
 
                 // Start the pattern recognition...
-
-                // Check for S5 patterns
-                idx = 0;
                 for (const auto &stone : positions) {
-                    if (stone.color != (Color)color) {
-                        idx++;
+                    if (stone.color != (Color)color)
                         continue;
-                    }
 
-                    // Check if the stone idx is smaller than 5 because we can't have
-                    // a S5 pattern without 5 positions to explore
-                    if (idx >= 5) {
-                        idx++;
-                        continue;
-                    }
-
-                    // Check if there are 5 stones in a row
+                    // Check for S5 pattern : XXXXX
                     if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 5)) {
-                        // std::cout << "DEBUG Found a S5 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "S5";
+                        return std::numeric_limits<int>::max();
+                    }
+                    bool fourInRow = checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 4);
+                    // Check for D4 pattern : +XXXX+
+                    if (fourInRow &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
+                        isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy)) {
+                        std::get<4>(line) = "D4";
                         return 1000000;
                     }
-                }
-
-                // Check for D4 patterns
-                idx = 0;
-                for (const auto &stone : positions) {
-                    if (stone.color != (Color)color) {
-                        idx++;
-                        continue;
+                    // Check for S4 pattern : +XXXX
+                    if (fourInRow && isEmpty(stone.pos.x - dx, stone.pos.y - dy)) {
+                        std::get<4>(line) = "S4 1";
+                        return 1000000;
                     }
-                    bool fourInRow = checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 4);
-                    bool beforeEmpty = isEmpty(stone.pos.x - dx, stone.pos.y - dy);
-                    bool afterEmpty = isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-
-                    // Simple case where all the stones are in a row
-                    if (fourInRow && beforeEmpty && afterEmpty) {
-                        // std::cout << "DEBUG Found a D4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
-                        std::get<4>(line) = "D4";
-                        return 100000;
+                    // Check for S4 patterns : X+XXX, XX+XX, XXX+X, XXXX+
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 1)) {
+                        std::get<4>(line) = "S4 2";
+                        return 1000000;
                     }
-
-                    // Check if the stone is the first of the line
-                    if (idx != 0) {
-                        idx++;
-                        continue;
-                    }
-
-                    // Case where the stones have a trigger but not at the end or the beginning
-                    bool fourInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 9, 2);
-                    bool lastStoneEmpty = isEmpty(stone.pos.x + 8 * dx, stone.pos.y + 8 * dy);
-                    if (fourInRowWithTrigger && !lastStoneEmpty) {
-                        // std::cout << "DEBUG Found a D4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
-                        std::get<4>(line) = "D4 Trigger";
-                        return 100000;
-                    }
-                    idx++;
-                }
-
-                // Check for S4 patterns
-                idx = 0;
-                for (const auto &stone : positions) {
-                    if (stone.color != (Color)color) {
-                        idx++;
-                        continue;
-                    }
-                    bool fourInRow = checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 4);
-                    bool beforeEmpty = isEmpty(stone.pos.x - dx, stone.pos.y - dy);
-                    bool afterEmpty = isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-                    if ((fourInRow && beforeEmpty) || (fourInRow && afterEmpty)) {
-                        // std::cout << "DEBUG Found a S4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
-                        std::get<4>(line) = "S4";
+                    // Check for D3 pattern : ++XXX+
+                    if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 3) &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
+                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy)) {
+                            if (isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy)) {
+                                std::get<4>(line) = "D3 1";
+                                if (color == 2)
+                                    return 100001;
+                                return 25000;
+                            }
+                        std::get<4>(line) = "S3 1";
+                        if (color == 2)
+                            return 10001;
                         return 10000;
                     }
-
-                    // Check if the stone is smaller than 5 because we can't have a S4 pattern with a trigger
-                    // when there are only 4 positions left to explore
-                    if (idx >= 5) {
-                        idx++;
-                        continue;
+                    // Check for D3 patterns : +XXX++, +XX+X+, +X+XX+
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 2) &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
+                        isEmpty(stone.pos.x + 5 * dx, stone.pos.y + 5 * dy)) {
+                        std::get<4>(line) = "D3 2";
+                        if (color == 2)
+                            return 100001;
+                        return 25000;
                     }
-
-                    // Case where the stones have a trigger but not at the end or the beginning
-                    bool fourInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 1);
-                    if (fourInRowWithTrigger) {
-                        // std::cout << "DEBUG Found a S4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
-                        std::get<4>(line) = "S4 Trigger";
+                    // Check for S3 patterns : +XXX+, +X+XX, +XX+X
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 1) &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy)) {
+                        std::get<4>(line) = "S3 2";
+                        if (color == 2)
+                            return 10001;
                         return 10000;
                     }
-                    idx++;
-                }
-
-                // Check for D3 patterns
-                idx = 0;
-                for (const auto &stone : positions) {
-                    if (stone.color != (Color)color) {
-                        idx++;
-                        continue;
+                    // Check for S3 patterns : XXX++, XX++X, X++XX, X+XX+, X+X+X, XX+X+
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 2)) {
+                        std::get<4>(line) = "S3 3";
+                        if (color == 2)
+                            return 10001;
+                        return 10000;
                     }
-                    bool threeInRow = checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 3);
-                    bool beforeEmpty =
+                    // Check for D2 pattern : +++XX+
+                    if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 2) &&
                         isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
-                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy);
-                    bool afterEmpty =
-                        isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy) &&
-                        isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-
-                    // Simple case where 3 stones are in a row and there are two empty spaces on each side
-                    if ((threeInRow && beforeEmpty && afterEmpty)) {
-                        // std::cout << "DEBUG Found a D3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
-                        std::get<4>(line) = "D3";
+                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy) &&
+                        isEmpty(stone.pos.x - 3 * dx, stone.pos.y - 3 * dy) &&
+                        isEmpty(stone.pos.x + 2 * dx, stone.pos.y + 2 * dy)) {
+                        std::get<4>(line) = "D2 1";
+                        if (color == 2)
+                            return 4001;
                         return 1000;
                     }
-
-                    // Check if the stone is the first of the line
-                    if (idx != 0) {
-                        idx++;
-                        continue;
-                    }
-
-                    // Case where the stones have a trigger but not at the end or the beginning
-                    bool threeInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 9, 4);
-                    if (threeInRowWithTrigger) {
-                        // std::cout << "DEBUG Found a D3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
-                        std::get<4>(line) = "D3 Trigger";
+                    // Check for D2 patterns : ++XX++, ++X+X+
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 2) &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
+                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy) &&
+                        isEmpty(stone.pos.x + 5 * dx, stone.pos.y + 5 * dy)) {
+                        std::get<4>(line) = "D2 2";
+                        if (color == 2)
+                            return 4001;
                         return 1000;
                     }
-                    idx++;
-                }
-
-                // Check for W3 patterns
-                idx = 0;
-                for (const auto &stone : positions) {
-                    if (stone.color != (Color)color) {
-                        idx++;
-                        continue;
-                    }
-                    bool threeInRow = checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 3);
-                    bool beforeEmpty =
+                    // Check for D2 patterns : +XX+++, +X+X++, +X++X+
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 3) &&
                         isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
-                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy);
-                    bool afterEmpty =
-                        isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy) &&
-                        isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-
-                    // Simple case where 3 stones are in a row and there is one side where
-                    // there are two empty spaces and the other side has one empty space
-                    if ((threeInRow && beforeEmpty && isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy)) ||
-                        (threeInRow && afterEmpty && isEmpty(stone.pos.x - dx, stone.pos.y - dy))) {
-                        // std::cout << "DEBUG Found a W3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
-                        std::get<4>(line) = "W3";
-                        return 500;
+                        isEmpty(stone.pos.x + 5 * dx, stone.pos.y + 5 * dy)) {
+                        std::get<4>(line) = "D2 3";
+                        if (color == 2)
+                            return 4001;
+                        return 1000;
                     }
-
-                    // We need at least 5 positions to check for a trigger,
-                    // so we skip the last 4 positions
-                    if (idx >= 5) {
-                        idx++;
-                        continue;
-                    }
-
-                    beforeEmpty = isEmpty(stone.pos.x - dx, stone.pos.y - dy);
-                    afterEmpty = isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-
-                    bool threeInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 1);
-                    if (threeInRowWithTrigger && beforeEmpty && afterEmpty) {
-                        // std::cout << "DEBUG Found a W3 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
-                        std::get<4>(line) = "W3 Trigger";
-                        return 500;
-                    }
-                    idx++;
-                }
-
-                // Check for S3 patterns
-                idx = 0;
-                for (const auto &stone : positions) {
-                    if (stone.color != (Color)color) {
-                        idx++;
-                        continue;
-                    }
-                    bool threeInRow = checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 3);
-                    bool beforeEmpty =
+                    // Check for S2 pattern : +++XX
+                    if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 2) &&
                         isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
-                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy);
-                    bool afterEmpty =
-                        isEmpty(stone.pos.x + 3 * dx, stone.pos.y + 3 * dy) &&
-                        isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-
-                    // Simple case where 3 stones are in a row and there are two empty spaces on each side
-                    if (((threeInRow && beforeEmpty) || (threeInRow && afterEmpty))) {
-                        // std::cout << "DEBUG Found a S3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
-                        std::get<4>(line) = "S3";
+                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy) &&
+                        isEmpty(stone.pos.x - 3 * dx, stone.pos.y - 3 * dy)) {
+                        std::get<4>(line) = "S2 1";
+                        if (color == 2)
+                            return 101;
                         return 100;
                     }
-
-                    // Check if the stone is the first of the line
-                    if (idx >= 5) {
-                        idx++;
-                        continue;
-                    }
-
-                    beforeEmpty = isEmpty(stone.pos.x - dx, stone.pos.y - dy);
-                    afterEmpty = isEmpty(stone.pos.x + 4 * dx, stone.pos.y + 4 * dy);
-
-                    // Case where the stones have a trigger but not at the end or the beginning
-                    bool threeInRowWithTrigger = checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 1);
-                    if ((threeInRowWithTrigger && beforeEmpty) || (threeInRowWithTrigger && afterEmpty)) {
-                        // std::cout << "DEBUG Found a S3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
-                        std::get<4>(line) = "S3 Trigger";
+                    // Check for S2 patterns : ++XX+, ++X+X
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 3, 1) &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy) &&
+                        isEmpty(stone.pos.x - 2 * dx, stone.pos.y - 2 * dy)) {
+                        std::get<4>(line) = "S2 2";
+                        if (color == 2)
+                            return 101;
                         return 100;
                     }
-                    idx++;
+                    // Check for S2 patterns : +XX++, +X+X+, +X++X
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 4, 2) &&
+                        isEmpty(stone.pos.x - dx, stone.pos.y - dy)) {
+                        std::get<4>(line) = "S2 3";
+                        if (color == 2)
+                            return 101;
+                        return 100;
+                    }
+                    // Check for S2 patterns : XX+++, X+++X, X++X+, X+X++
+                    if (checkNInRowWithTTriggers(stone.pos.x, stone.pos.y, dx, dy, color, 5, 3)) {
+                        std::get<4>(line) = "S2 4";
+                        if (color == 2)
+                            return 101;
+                        return 100;
+                    }
                 }
-
-                // Check for D2 patterns
-                // Check for W2 patterns
-                // Check for S2 patterns
-
                 return 0;
             }
 
@@ -651,6 +565,19 @@ namespace Gomoku {
                 return false;
             }
 
+            std::unordered_map<size_t, std::pair<uint8_t, uint8_t>> transpositionTable;
+
+            size_t hashBoard(const Board& board) {
+                size_t hash = 0;
+
+                for (uint8_t x = 0; x < 20; ++x) {
+                    for (uint8_t y = 0; y < 20; ++y) {
+                        hash ^= static_cast<size_t>(board.board[x][y]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+                    }
+                }
+                return hash;
+            }
+
             /**
              * @brief Minimax algorithm- elegage Alpha-Beta pruning. \n
              * 
@@ -666,30 +593,24 @@ namespace Gomoku {
              * @param beta : the beta value
              * @return int : the score of the board
              */
-            int minMax(Board board, Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
-                auto start = std::chrono::high_resolution_clock::now();
+            int minMax(Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
+                size_t boardHash = hashBoard(exploratingBoard);
+
+                if (transpositionTable.count(boardHash) && transpositionTable[boardHash].first <= depth)
+                    return transpositionTable[boardHash].second;
 
                 int score = evaluateBoard();
 
-                auto end = std::chrono::high_resolution_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-                int seconds = duration / 1'000'000;
-                int milliseconds = (duration % 1'000'000) / 1'000;
-                int microseconds = duration % 1'000;
-
-                //std::cout << "DEBUG Execution time for evaluateBoard : " << seconds << "s "
-                //<< milliseconds << "ms "
-                //<< microseconds << "µs" << std::endl;
-
                 if (depth == 0 || score >= 1000000 || score <= -1000000)
                     return score;
+
                 if (isMaximizing) {
                     int bestScore = std::numeric_limits<int>::min();
                     for (uint8_t x = 0; x < 20; ++x) {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 3) {
                                 exploratingBoard.board[x][y] = 2;
-                                int res = minMax(board, exploratingBoard, depth - 1, false, alpha, beta);
+                                int res = minMax(exploratingBoard, depth - 1, false, alpha, beta);
                                 exploratingBoard.board[x][y] = 3;
                                 bestScore = std::max(res, bestScore);
                                 alpha = std::max(alpha, bestScore);
@@ -698,6 +619,8 @@ namespace Gomoku {
                             }
                         }
                     }
+                    if (!transpositionTable.count(boardHash) || transpositionTable[boardHash].first > depth)
+                        transpositionTable[boardHash] = {depth, bestScore};
                     return bestScore;
                 } else {
                     int bestScore = std::numeric_limits<int>::max();
@@ -705,7 +628,7 @@ namespace Gomoku {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 3) {
                                 exploratingBoard.board[x][y] = 1;
-                                int res = minMax(board, exploratingBoard, depth - 1, true, alpha, beta);
+                                int res = minMax(exploratingBoard, depth - 1, true, alpha, beta);
                                 exploratingBoard.board[x][y] = 3;
                                 bestScore = std::min(res, bestScore);
                                 beta = std::min(beta, bestScore);
@@ -714,9 +637,10 @@ namespace Gomoku {
                             }
                         }
                     }
+                    if (!transpositionTable.count(boardHash) || transpositionTable[boardHash].first > depth)
+                        transpositionTable[boardHash] = {depth, bestScore};
                     return bestScore;
                 }
-                return 0;
             }
 
             /**
@@ -727,38 +651,40 @@ namespace Gomoku {
             Position getBestMove() {
                 int bestScore = std::numeric_limits<int>::min();
                 Position bestMove;
-                int depth = 1;
+                int depth = 2;
 
-                while (depth <= 4) {
-                    std::cout << "DEBUG Depth: " << depth << std::endl;
-                    for (uint8_t x = 0; x < 20; ++x) {
-                        for (uint8_t y = 0; y < 20; ++y) {
-                            if (searchBoard.board[x][y] == 3) {
-                                searchBoard.board[x][y] = 1;
+                for (uint8_t x = 0; x < 20; ++x) {
+                    for (uint8_t y = 0; y < 20; ++y) {
+                        if (searchBoard.board[x][y] == 3) {
+                            searchBoard.board[x][y] = 1;
 
-                                auto start = std::chrono::high_resolution_clock::now();
+                            auto start = std::chrono::high_resolution_clock::now();
 
-                                int score = minMax(board, searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+                            int score = minMax(searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 
-                                auto end = std::chrono::high_resolution_clock::now();
-                                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-                                int seconds = duration / 1'000'000;
-                                int milliseconds = (duration % 1'000'000) / 1'000;
-                                int microseconds = duration % 1'000;
+                            auto end = std::chrono::high_resolution_clock::now();
+                            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+                            int seconds = duration / 1'000'000;
+                            int milliseconds = (duration % 1'000'000) / 1'000;
+                            int microseconds = duration % 1'000;
 
-                                std::cout << "DEBUG Execution time for minMax : " << seconds << "s "
-                                << milliseconds << "ms "
-                                << microseconds << "µs" << std::endl;
+                            std::cout << "DEBUG Execution time for minMax : " << seconds << "s "
+                            << milliseconds << "ms "
+                            << microseconds << "µs" << std::endl;
 
-                                searchBoard.board[x][y] = 3;
-                                if (score > bestScore) {
+                            searchBoard.board[x][y] = 3;
+                            if (score == bestScore) {
+                                if (rand() % 2 == 0) {
                                     bestScore = score;
                                     bestMove = Position(x, y);
                                 }
+                            } else if (score > bestScore) {
+                                bestScore = score;
+                                bestMove = Position(x, y);
                             }
+
                         }
                     }
-                    depth++;
                 }
                 std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << std::endl;
                 if (bestScore == std::numeric_limits<int>::min()) {
