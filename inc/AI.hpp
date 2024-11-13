@@ -13,6 +13,7 @@
     #include <tuple>
     #include <array>
     #include <limits>
+    #include <chrono>
     #include "Position.hpp"
     #include "Stone.hpp"
     #include "Board.hpp"
@@ -43,6 +44,7 @@ namespace Gomoku {
              */
             void turn()
             {
+
                 Position bestMove = getBestMove();
                 uint8_t x = bestMove.x;
                 uint8_t y = bestMove.y;
@@ -355,9 +357,6 @@ namespace Gomoku {
                 int idx = 0;
                 std::get<4>(line) = "None";
 
-                // If line is enemy, it has more power since it's not a future threat, it's a current threat
-                int colorPower = color == 1 ? 1 : 2;
-
                 // Compute dx and dy based on the direction
                 switch (direction) {
                     case 0: dy = 1; break;
@@ -387,7 +386,7 @@ namespace Gomoku {
                     if (checkNInRow(stone.pos.x, stone.pos.y, dx, dy, color, 5)) {
                         // std::cout << "DEBUG Found a S5 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "S5";
-                        return 1000000 * colorPower;
+                        return 1000000;
                     }
                 }
 
@@ -406,7 +405,7 @@ namespace Gomoku {
                     if (fourInRow && beforeEmpty && afterEmpty) {
                         // std::cout << "DEBUG Found a D4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "D4";
-                        return 100000 * colorPower;
+                        return 100000;
                     }
 
                     // Check if the stone is the first of the line
@@ -421,7 +420,7 @@ namespace Gomoku {
                     if (fourInRowWithTrigger && !lastStoneEmpty) {
                         // std::cout << "DEBUG Found a D4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "D4 Trigger";
-                        return 100000 * colorPower;
+                        return 100000;
                     }
                     idx++;
                 }
@@ -439,7 +438,7 @@ namespace Gomoku {
                     if ((fourInRow && beforeEmpty) || (fourInRow && afterEmpty)) {
                         // std::cout << "DEBUG Found a S4 pattern for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "S4";
-                        return 90000 * colorPower;
+                        return 10000;
                     }
 
                     // Check if the stone is smaller than 5 because we can't have a S4 pattern with a trigger
@@ -454,7 +453,7 @@ namespace Gomoku {
                     if (fourInRowWithTrigger) {
                         // std::cout << "DEBUG Found a S4 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "S4 Trigger";
-                        return 90000 * colorPower;
+                        return 10000;
                     }
                     idx++;
                 }
@@ -478,7 +477,7 @@ namespace Gomoku {
                     if ((threeInRow && beforeEmpty && afterEmpty)) {
                         // std::cout << "DEBUG Found a D3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "D3";
-                        return 50000 * colorPower;
+                        return 1000;
                     }
 
                     // Check if the stone is the first of the line
@@ -492,7 +491,7 @@ namespace Gomoku {
                     if (threeInRowWithTrigger) {
                         // std::cout << "DEBUG Found a D3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "D3 Trigger";
-                        return 50000 * colorPower;
+                        return 1000;
                     }
                     idx++;
                 }
@@ -518,7 +517,7 @@ namespace Gomoku {
                         (threeInRow && afterEmpty && isEmpty(stone.pos.x - dx, stone.pos.y - dy))) {
                         // std::cout << "DEBUG Found a W3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "W3";
-                        return 40000 * colorPower;
+                        return 500;
                     }
 
                     // We need at least 5 positions to check for a trigger,
@@ -535,7 +534,7 @@ namespace Gomoku {
                     if (threeInRowWithTrigger && beforeEmpty && afterEmpty) {
                         // std::cout << "DEBUG Found a W3 pattern with a trigger for: " << (color == 1 ? "AI" : "Enemy") << std::endl;
                         std::get<4>(line) = "W3 Trigger";
-                        return 40000 * colorPower;
+                        return 500;
                     }
                     idx++;
                 }
@@ -559,7 +558,7 @@ namespace Gomoku {
                     if (((threeInRow && beforeEmpty) || (threeInRow && afterEmpty))) {
                         // std::cout << "DEBUG Found a S3 pattern for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "S3";
-                        return 30000 * colorPower;
+                        return 100;
                     }
 
                     // Check if the stone is the first of the line
@@ -576,7 +575,7 @@ namespace Gomoku {
                     if ((threeInRowWithTrigger && beforeEmpty) || (threeInRowWithTrigger && afterEmpty)) {
                         // std::cout << "DEBUG Found a S3 pattern with a trigger for: " << (color == 1 ? "Player" : "Enemy") << std::endl;
                         std::get<4>(line) = "S3 Trigger";
-                        return 30000 * colorPower;
+                        return 100;
                     }
                     idx++;
                 }
@@ -668,7 +667,19 @@ namespace Gomoku {
              * @return int : the score of the board
              */
             int minMax(Board board, Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
+                auto start = std::chrono::high_resolution_clock::now();
+
                 int score = evaluateBoard();
+
+                auto end = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+                int seconds = duration / 1'000'000;
+                int milliseconds = (duration % 1'000'000) / 1'000;
+                int microseconds = duration % 1'000;
+
+                //std::cout << "DEBUG Execution time for evaluateBoard : " << seconds << "s "
+                //<< milliseconds << "ms "
+                //<< microseconds << "µs" << std::endl;
 
                 if (depth == 0 || score >= 1000000 || score <= -1000000)
                     return score;
@@ -677,9 +688,9 @@ namespace Gomoku {
                     for (uint8_t x = 0; x < 20; ++x) {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 3) {
-                                board.board[x][y] = 2;
+                                exploratingBoard.board[x][y] = 2;
                                 int res = minMax(board, exploratingBoard, depth - 1, false, alpha, beta);
-                                board.board[x][y] = 0;
+                                exploratingBoard.board[x][y] = 3;
                                 bestScore = std::max(res, bestScore);
                                 alpha = std::max(alpha, bestScore);
                                 if (beta <= alpha)
@@ -693,9 +704,9 @@ namespace Gomoku {
                     for (uint8_t x = 0; x < 20; ++x) {
                         for (uint8_t y = 0; y < 20; ++y) {
                             if (exploratingBoard.board[x][y] == 3) {
-                                board.board[x][y] = 1;
+                                exploratingBoard.board[x][y] = 1;
                                 int res = minMax(board, exploratingBoard, depth - 1, true, alpha, beta);
-                                board.board[x][y] = 0;
+                                exploratingBoard.board[x][y] = 3;
                                 bestScore = std::min(res, bestScore);
                                 beta = std::min(beta, bestScore);
                                 if (beta <= alpha)
@@ -716,25 +727,39 @@ namespace Gomoku {
             Position getBestMove() {
                 int bestScore = std::numeric_limits<int>::min();
                 Position bestMove;
+                int depth = 1;
 
-                for (uint8_t x = 0; x < 20; ++x) {
-                    for (uint8_t y = 0; y < 20; ++y) {
-                        if (searchBoard.board[x][y] == 3) {
-                            board.board[x][y] = 1;
-                            int score = minMax(board, searchBoard, 2, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
-                            board.board[x][y] = 0;
-                            if (score == bestScore) {
-                                if (rand() % 2 == 0) {
+                while (depth <= 4) {
+                    std::cout << "DEBUG Depth: " << depth << std::endl;
+                    for (uint8_t x = 0; x < 20; ++x) {
+                        for (uint8_t y = 0; y < 20; ++y) {
+                            if (searchBoard.board[x][y] == 3) {
+                                searchBoard.board[x][y] = 1;
+
+                                auto start = std::chrono::high_resolution_clock::now();
+
+                                int score = minMax(board, searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+
+                                auto end = std::chrono::high_resolution_clock::now();
+                                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+                                int seconds = duration / 1'000'000;
+                                int milliseconds = (duration % 1'000'000) / 1'000;
+                                int microseconds = duration % 1'000;
+
+                                std::cout << "DEBUG Execution time for minMax : " << seconds << "s "
+                                << milliseconds << "ms "
+                                << microseconds << "µs" << std::endl;
+
+                                searchBoard.board[x][y] = 3;
+                                if (score > bestScore) {
                                     bestScore = score;
                                     bestMove = Position(x, y);
                                 }
-                            } else if (score > bestScore) {
-                                bestScore = score;
-                                bestMove = Position(x, y);
                             }
                         }
                     }
-                };
+                    depth++;
+                }
                 std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << std::endl;
                 if (bestScore == std::numeric_limits<int>::min()) {
                     bestMove = Position(10, 10);
