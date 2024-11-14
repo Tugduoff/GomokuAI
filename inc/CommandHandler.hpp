@@ -79,9 +79,12 @@ namespace Gomoku {
              * START 20
              */
             void handleStart(std::string cmdArgs) {
-                int size;
+                int size = 0;
                 std::istringstream iss(cmdArgs);
-
+                if (size <= 0) {
+                    std::cout << "ERROR Invalid board size" << std::endl;
+                    return;
+                }
                 __ai.board = Gomoku::Board();
                 std::cout << "OK" << std::endl;
             }
@@ -105,12 +108,22 @@ namespace Gomoku {
                 std::istringstream iss(args);
 
                 if (!(iss >> x >> comma >> y) || comma != ',') {
-                    std::cerr << "ERROR Invalid TURN command format. Expected 'TURN X,Y'" << std::endl;
+                    std::cout << "ERROR Invalid TURN command format. Expected 'TURN X,Y'" << std::endl;
+                    return;
+                }
+                if (x < 0 || x >= 20 || y < 0 || y >= 20) {
+                    std::cout << "ERROR Invalid position" << std::endl;
+                    return;
+                }
+
+                if (__ai.board.board[(uint8_t)x][(uint8_t)y] != 0) {
+                    std::cout << "ERROR Position already played" << std::endl;
                     return;
                 }
 
                 std::cout << "DEBUG Enemy played at " << x << "," << y << std::endl;
                 __ai.board.board[(uint8_t)x][(uint8_t)y] = 2;
+                __ai.addToSearchBoard((uint8_t)x, (uint8_t)y, 2);
                 __ai.turn();
             }
 
@@ -149,17 +162,27 @@ namespace Gomoku {
             void handleBoard(std::string cmdArgs) {
                 __ai.board = Gomoku::Board();
 
-                std::string line;
-                while (std::getline(std::cin, line)) {
-                    if (line == "DONE") break;
+                std::string line = "";
+                while (true) {
+                    std::getline(std::cin >> std::ws, line);
+                    if (line == "DONE")
+                        break;
+
+                    std::cout << "DEBUG " << line << std::endl;
 
                     std::istringstream iss(line);
                     int x, y, color;
-                    if (!(iss >> x >> y >> color)) {
-                        std::cerr << "ERROR Invalid board data format." << std::endl;
+                    char comma1, comma2;
+                    iss >> x >> comma1 >> y >> comma2 >> color;
+
+                    bool boardFormatIsValid =
+                        (x < 0 || x >= 20 || y < 0 || y >= 20 || color > 3 || color < 0 || comma1 != ',' || comma2 != ',');
+                    if (boardFormatIsValid) {
+                        std::cout << "ERROR Invalid board data format." << std::endl;
                         continue;
                     }
                     __ai.board.board[x][y] = color;
+                    __ai.addToSearchBoard(x, y, color);
                 }
                 __ai.turn();
             }
@@ -223,7 +246,7 @@ namespace Gomoku {
              * @param cmd The unknown command
              */
             void handleUnknown(const std::string &cmd) {
-                std::cerr << "ERROR Unknown command \"" << cmd << "\"" << std::endl;
+                std::cout << "ERROR Unknown command \"" << cmd << "\"" << std::endl;
             }
     };
 };

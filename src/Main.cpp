@@ -13,10 +13,15 @@ int main(void) {
     Gomoku::CommandHandler handler(ai);
     std::string cmd;
 
+    srand(time(NULL));
+
     while (true) {
         std::cin.clear();
         cmd.clear();
-        std::cin >> cmd;
+        if (!(std::cin >> cmd)) {
+            std::cout << "DEBUG End of input detected. Exiting" << std::endl;
+            break;
+        }
         handler.execute(cmd);
     }
     return 0;
