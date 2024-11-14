@@ -32,13 +32,22 @@ namespace Gomoku {
             }) {}
 
             void execute(const std::string &cmd) {
+                static bool isBoard = false;
                 std::vector<std::string> args = split(cmd, ' ');
                 std::string command = args[0];
                 std::string cmdArgs = args.size() > 1 ? args[1] : "";
 
+                if (isBoard) {
+                    handleBoard(cmd);
+                    if (command == "DONE")
+                        isBoard = false;
+                    return;
+                }
                 auto it = __commands.find(command);
 
                 if (it != __commands.end()) {
+                    if (command == "BOARD")
+                        isBoard = true;
                     it->second(cmdArgs);
                 } else {
                     handleUnknown(command);
@@ -79,8 +88,7 @@ namespace Gomoku {
              * START 20
              */
             void handleStart(std::string cmdArgs) {
-                int size = 0;
-                std::istringstream iss(cmdArgs);
+                int size = std::stoi(cmdArgs);
                 if (size <= 0) {
                     std::cout << "ERROR Invalid board size" << std::endl;
                     return;
@@ -100,12 +108,9 @@ namespace Gomoku {
              * @note The AI will note the enemy move and play its turn
              */
             void handleTurn(std::string cmdArgs) {
-                std::string args;
-                std::getline(std::cin >> std::ws, args);
-
+                std::istringstream iss(cmdArgs);
                 int x, y;
                 char comma;
-                std::istringstream iss(args);
 
                 if (!(iss >> x >> comma >> y) || comma != ',') {
                     std::cout << "ERROR Invalid TURN command format. Expected 'TURN X,Y'" << std::endl;
@@ -162,29 +167,29 @@ namespace Gomoku {
             void handleBoard(std::string cmdArgs) {
                 __ai.board = Gomoku::Board();
 
-                std::string line = "";
-                while (true) {
-                    std::getline(std::cin >> std::ws, line);
-                    if (line == "DONE")
-                        break;
-
-                    std::cout << "DEBUG " << line << std::endl;
-
-                    std::istringstream iss(line);
-                    int x, y, color;
-                    char comma1, comma2;
-                    iss >> x >> comma1 >> y >> comma2 >> color;
-
-                    bool boardFormatIsValid =
-                        (x < 0 || x >= 20 || y < 0 || y >= 20 || color > 3 || color < 0 || comma1 != ',' || comma2 != ',');
-                    if (boardFormatIsValid) {
-                        std::cout << "ERROR Invalid board data format." << std::endl;
-                        continue;
-                    }
-                    __ai.board.board[x][y] = color;
-                    __ai.addToSearchBoard(x, y, color);
+                std::string line = cmdArgs;
+                if (line.empty())
+                    return;
+                if (line == "DONE") {
+                    __ai.turn();
+                    return;
                 }
-                __ai.turn();
+
+                std::cout << "DEBUG " << line << std::endl;
+
+                std::istringstream iss(line);
+                int x, y, color;
+                char comma1, comma2;
+                iss >> x >> comma1 >> y >> comma2 >> color;
+
+                bool boardFormatIsValid =
+                    (x < 0 || x >= 20 || y < 0 || y >= 20 || color > 3 || color < 0 || comma1 != ',' || comma2 != ',');
+                if (boardFormatIsValid) {
+                    std::cout << "ERROR Invalid board data format." << std::endl;
+                    return;
+                }
+                __ai.board.board[x][y] = color;
+                __ai.addToSearchBoard(x, y, color);
             }
 
             /**
