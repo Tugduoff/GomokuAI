@@ -637,7 +637,7 @@ namespace Gomoku {
                         board.board[move.x][move.y] = 0;
                         alpha = std::max(alpha, res);
                         if (alpha >= beta) {
-                            transpositionTable[boardHash] = alpha;
+                            //transpositionTable[boardHash] = alpha;
                             return alpha;
                         }
                     }
@@ -662,7 +662,7 @@ namespace Gomoku {
                         board.board[move.x][move.y] = 0;
                         beta = std::min(beta, res);
                         if (alpha >= beta) {
-                            transpositionTable[boardHash] = beta;
+                            //transpositionTable[boardHash] = beta;
                             return beta;
                         }
                     }
@@ -677,7 +677,7 @@ namespace Gomoku {
              * @return Position : the best move for the AI
              */
             Position getBestMove() {
-                int bestScore = -1000000;
+                int bestScore = std::numeric_limits<int>::min();
                 Position bestMove;
                 int depth = 2;
 
@@ -689,7 +689,7 @@ namespace Gomoku {
 
                             auto start = std::chrono::high_resolution_clock::now();
 
-                            int score = principalVariationSearch(searchBoard, depth, false, -1000000, 1000000);
+                            int score = principalVariationSearch(searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 
                             auto end = std::chrono::high_resolution_clock::now();
                             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
