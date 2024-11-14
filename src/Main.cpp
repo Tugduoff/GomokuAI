@@ -40,8 +40,11 @@ void executeCmd(Gomoku::CommandHandler &handler) {
         std::unique_lock<std::mutex> lock(mtx);
         cv.wait(lock, [] { return ready; });
         std::cout << "DEBUG Executing command: " << cmd << std::endl;
+        if (cmd.empty()) {
+            ready = false;
+            continue;
+        }
         handler.execute(cmd);
-
         ready = false;
     }
 }
