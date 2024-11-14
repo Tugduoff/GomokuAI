@@ -90,13 +90,13 @@ namespace Gomoku {
                     return;
                 }
 
-                if (__ai.board.board[(uint8_t)x][(uint8_t)y] != 0) {
+                if (__ai.board.board[(uint8_t)x][(uint8_t)y] != Color::EMPTY) {
                     std::cout << "ERROR Position already played" << std::endl;
                     return;
                 }
 
                 std::cout << "DEBUG Enemy played at " << x << "," << y << std::endl;
-                __ai.board.board[(uint8_t)x][(uint8_t)y] = 2;
+                __ai.board.playMove(Position(x, y), Color::ENEMY);
                 __ai.addToSearchBoard((uint8_t)x, (uint8_t)y, 2);
                 __ai.turn();
             }
@@ -155,7 +155,7 @@ namespace Gomoku {
                         std::cout << "ERROR Invalid board data format." << std::endl;
                         continue;
                     }
-                    __ai.board.board[x][y] = color;
+                    __ai.board.playMove(Position(x, y), (Color)color);
                     __ai.addToSearchBoard(x, y, color);
                 }
                 __ai.turn();

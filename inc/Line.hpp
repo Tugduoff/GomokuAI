@@ -2,14 +2,13 @@
 ** EPITECH PROJECT, 2024
 ** GomokuAI
 ** File description:
-** Stone Class
+** Line Class
 */
 
-#ifndef STONE_HPP_
-    #define STONE_HPP_
+#ifndef LINE_HPP_
+    #define LINE_HPP_
 
-    #include <iostream>
-    #include "Position.hpp"
+    #include "Stone.hpp"
 
 /**
  * @brief Namespace for the Gomoku game
@@ -17,33 +16,25 @@
  * This namespace contains all the classes and functions for the Gomoku game
  */
 namespace Gomoku {
-    /**
-     * @brief Enum for the color of the stone
-     */
-    enum class Color : uint8_t {
-        EMPTY = 0,
-        AI = 1,
-        ENEMY = 2,
-        TO_EXPLORE = 3,
-        OUT_OF_BOUND = 4,
-        AI_NEW = 5,
-        ENEMY_NEW = 6,
-    };
 
     /**
      * @brief Class for the stone
      * 
      * This class contains the position and color of the stone
      */
-    class Stone {
+    class Line {
         public:
 
-            Stone() = default;
-            Stone(Position stonePos, Color stoneColor) : pos(stonePos), color(stoneColor) {};
-            ~Stone() = default;
+            Line() = default;
+            Line(int lineScore, int8_t lineDx, int8_t lineDy, Color lineColor, std::array<Stone, 9> &&linePositions) :
+                score(lineScore), dx(lineDx), dy(lineDy), color(lineColor), positions(linePositions) {};
+            ~Line() = default;
 
-            Position pos;
+            int score;
+            int8_t dx;
+            int8_t dy;
             Color color;
+            std::array<Stone, 9> positions;
 
         protected:
         private:
@@ -58,7 +49,7 @@ namespace Gomoku {
      * @param color The color to display
      * @return std::ostream &The output stream
      */
-    std::ostream &operator<<(std::ostream &os, const Color &color);
+    std::ostream &operator<<(std::ostream &os, const Line &line);
 };
 
-#endif // STONE_HPP_
+#endif // LINE_HPP_
