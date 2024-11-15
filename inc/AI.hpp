@@ -9,7 +9,7 @@
 
     #include <chrono>
     #include <limits>
-    #include <unordered_map>
+    #include <TranspositionTable.hpp>
     #include "Board.hpp"
 
 namespace Gomoku {
@@ -24,7 +24,9 @@ namespace Gomoku {
              * @brief Construct a new AI object
              *
              */
-            AI() = default;
+            AI() {
+                tt.initializeZobristTable();
+            };
 
             /**
              * @brief Destroy the AI object
@@ -115,6 +117,7 @@ namespace Gomoku {
             }
 
             // Attributes
+            TranspositionTable tt;
             Board board;
             Board searchBoard; // Search board contains each cell to be evaluated
             int maxDepth = 4;
@@ -153,8 +156,6 @@ namespace Gomoku {
                 return score;
             }
 
-            std::unordered_map<size_t, int> transpositionTable;
-
             std::vector<Position> generateMoves(Board& boardTmp) {
                 std::vector<Position> moves;
                 for (uint8_t x = 0; x < 20; ++x) {
@@ -165,6 +166,21 @@ namespace Gomoku {
                     }
                 }
                 return moves;
+            }
+
+            void stockIntoTranspositionTable(uint64_t zobristKey, uint8_t depth, int bestValue, int alpha, int beta) {
+                TranspositionTable entry;
+
+                entry.value = bestValue;
+                entry.depth = depth;
+                if (bestValue <= alpha) {
+                    entry.flag = -1;
+                } else if (bestValue >= beta) {
+                    entry.flag = 1;
+                } else {
+                    entry.flag = 0;
+                }
+                tt.transpositionTable[zobristKey] = entry;
             }
 
             /**
@@ -182,8 +198,23 @@ namespace Gomoku {
              * @return int : the score of the board
              */
             int principalVariationSearch(Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
-                int score = evaluateBoard();
+                uint64_t zobristKey = tt.computeZobristHash(exploratingBoard);
+                auto it = tt.transpositionTable.find(zobristKey);
 
+                if (it != tt.transpositionTable.end()) {
+                    const TranspositionTable& entry = it->second;
+                    if (entry.depth >= depth) {
+                        if (entry.flag == 0) {
+                            return entry.value;
+                        } else if (entry.flag == -1 && entry.value <= alpha) {
+                            return entry.value;
+                        } else if (entry.flag == 1 && entry.value >= beta) {
+                            return entry.value;
+                        }
+                    }
+                }
+
+                int score = evaluateBoard();
                 if (depth == 0 || score >= 1000000 || score <= -1000000) {
                     return score;
                 }
@@ -210,6 +241,7 @@ namespace Gomoku {
                         board.undoMove(move);
                         alpha = std::max(alpha, res);
                     }
+                    stockIntoTranspositionTable(zobristKey, depth, alpha, alpha, beta);
                     return alpha;
                 } else {
                     bool firstChild = true;
@@ -230,6 +262,7 @@ namespace Gomoku {
                         board.undoMove(move);
                         beta = std::min(beta, res);
                     }
+                    stockIntoTranspositionTable(zobristKey, depth, beta, alpha, beta);
                     return beta;
                 }
             }
