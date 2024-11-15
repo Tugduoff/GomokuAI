@@ -8,6 +8,8 @@
     #define AI_HPP
 
     #include <chrono>
+    #include <limits>
+    #include <unordered_map>
     #include "Board.hpp"
 
 namespace Gomoku {
@@ -153,17 +155,6 @@ namespace Gomoku {
 
             std::unordered_map<size_t, int> transpositionTable;
 
-            size_t hashBoard(const Board& boardTmp) {
-                std::hash<std::string> hasher;
-                std::string boardString;
-                for (const auto& row : boardTmp.board) {
-                    for (const auto& cell : row) {
-                        boardString += std::to_string((uint8_t)cell);
-                    }
-                }
-                return hasher(boardString);
-            }
-
             std::vector<Position> generateMoves(Board& boardTmp) {
                 std::vector<Position> moves;
                 for (uint8_t x = 0; x < 20; ++x) {
@@ -191,10 +182,6 @@ namespace Gomoku {
              * @return int : the score of the board
              */
             int principalVariationSearch(Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
-                // size_t boardHash = hashBoard(exploratingBoard);
-                //if (transpositionTable.find(boardHash) != transpositionTable.end()) {
-                //    return transpositionTable[boardHash];
-                //}
                 int score = evaluateBoard();
 
                 if (depth == 0 || score >= 1000000 || score <= -1000000) {
@@ -222,12 +209,7 @@ namespace Gomoku {
                         exploratingBoard.board[move.x][move.y] = Color::TO_EXPLORE;
                         board.undoMove(move);
                         alpha = std::max(alpha, res);
-                        if (alpha >= beta) {
-                            //transpositionTable[boardHash] = alpha;
-                            return alpha;
-                        }
                     }
-                    // transpositionTable[boardHash] = alpha;
                     return alpha;
                 } else {
                     bool firstChild = true;
@@ -247,12 +229,7 @@ namespace Gomoku {
                         exploratingBoard.board[move.x][move.y] = Color::TO_EXPLORE;
                         board.undoMove(move);
                         beta = std::min(beta, res);
-                        if (alpha >= beta) {
-                            //transpositionTable[boardHash] = beta;
-                            return beta;
-                        }
                     }
-                    // transpositionTable[boardHash] = beta;
                     return beta;
                 }
             }
