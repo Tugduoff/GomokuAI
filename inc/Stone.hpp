@@ -26,8 +26,6 @@ namespace Gomoku {
         ENEMY = 2,
         TO_EXPLORE = 3,
         OUT_OF_BOUND = 4,
-        AI_NEW = 5,
-        ENEMY_NEW = 6,
     };
 
     /**
