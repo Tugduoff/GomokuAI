@@ -24,9 +24,21 @@ namespace Gomoku {
                 : position(pos), value(val), depth(dep), flag(fl) {};
             ~TranspositionTable() = default;
 
+            bool operator==(const TranspositionTable &other) const {
+                return position == other.position && value == other.value && depth == other.depth && flag == other.flag;
+            }
+
+            TranspositionTable &operator=(const TranspositionTable &other) {
+                position = other.position;
+                value = other.value;
+                depth = other.depth;
+                flag = other.flag;
+                return *this;
+            }
+
             std::unordered_map<uint64_t, TranspositionTable> transpositionTable;
             Position position;
-            uint8_t value;
+            int value;
             uint8_t depth;
             uint8_t flag;
 
