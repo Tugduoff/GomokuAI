@@ -5,7 +5,6 @@
 ** Main
 */
 
-#include <sstream>
 #include "CommandHandler.hpp"
 
 int main(void) {
