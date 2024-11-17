@@ -40,6 +40,7 @@ namespace Gomoku {
              */
             void turn()
             {
+                // displaySearchBoard();
                 int status = evaluateBoard();
                 std::cout << "DEBUG Status: " << status << std::endl;
                 if (status == std::numeric_limits<int>::max()) {
@@ -54,39 +55,75 @@ namespace Gomoku {
 
                 board.playMove(bestMove, Color::AI);
 
-                status = evaluateBoard(true);
+                status = evaluateBoard();
                 addToSearchBoard(x, y, 1);
+                // displaySearchBoard();
 
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
                 std::cout << "DEBUG Status: " << status << std::endl;
                 std::cout << "DEBUG Max depth: " << maxDepth << std::endl;
-                if (status == std::numeric_limits<int>::max()) {
+                if (status >= 10000000) {
                     std::cout << "DEBUG WIN" << std::endl;
-                } else if (status == std::numeric_limits<int>::min()) {
+                    displaySearchBoard();
+                } else if (status <= -10000000) {
                     std::cout << "DEBUG LOSE" << std::endl;
+                    displaySearchBoard();
                 }
                 std::cout << (int)x << "," << (int)y << std::endl; // Send the move to the game manager
             }
 
-            /**
-             * @brief Add the 8 surrounding cells of a position given to the search board + the position itself
-             *
-             * the 8 surrounding cells are added as : 1
-             * the cell itself is added as : 2
-             *
-             * @param x : x position
-             * @param y : y position
-             */
             void addToSearchBoard(uint8_t x, uint8_t y, uint8_t color) {
-                std::cout << "DEBUG Adding pos : " << (int)x << "," << (int)y << " to search board" << std::endl;
-                searchBoard.board[x][y] = (color == 1) ? Color::AI_NEW : Color::ENEMY_NEW;
+                // Store old colors for each 9 cells
+                std::array<Stone, 9> oldPositions;
+
+                // Store the center position explicitly
+                oldPositions[4] = Stone(Position(x, y), searchBoard.board[x][y]);
+                searchBoard.board[x][y] = (Color)color;
+
+                // Iterate through the 3x3 grid centered at (x, y)
                 for (int i = -1; i <= 1; ++i) {
                     for (int j = -1; j <= 1; ++j) {
-                        if (x + i >= 0 && x + i < 20 && y + j >= 0 && y + j < 20 && searchBoard.board[x + i][y + j] == Color::EMPTY)
-                            searchBoard.board[x + i][y + j] = Color::TO_EXPLORE;
+                        if (i == 0 && j == 0)
+                            continue;
+                        int idx = (i + 1) * 3 + (j + 1); // 3x3 grid index calculation
+                        Position pos(x + i, y + j);
+
+                        if (searchBoard.isPosEmpty(pos)) {
+                            oldPositions[idx] = Stone(pos, searchBoard.board[pos.x][pos.y]);
+                            searchBoard.board[pos.x][pos.y] = Color::TO_EXPLORE;
+                        } else {
+                            // For out-of-bounds positions, store a dummy value
+                            oldPositions[idx] = Stone(Position(-1, -1), Color::OUT_OF_BOUND);
+                        }
                     }
                 }
-                displaySearchBoard();
+
+                // Push the stored state onto the stack
+                searchBoardMoves.push_back(oldPositions);
+                // std::cout << "DEBUG | Added in search board: " << searchBoardMoves.size() << " stone: " << (int)oldPositions[4].pos.x << "," << (int)oldPositions[4].pos.y << std::endl;
+            }
+
+            void removeFromSearchBoard(uint8_t x, uint8_t y) {
+                // Retrieve the last stored state
+                std::array<Stone, 9> oldPositions = searchBoardMoves.back();
+                searchBoardMoves.pop_back(); // Remove the last element from the stack
+                // std::cout << "DEBUG | Removed from search board: " << searchBoardMoves.size() << std::endl;
+
+                // Restore the center position
+                searchBoard.board[x][y] = oldPositions[4].color;
+
+                // Iterate through the 3x3 grid centered at (x, y)
+                for (int i = -1; i <= 1; ++i) {
+                    for (int j = -1; j <= 1; ++j) {
+                        int idx = (i + 1) * 3 + (j + 1); // 3x3 grid index calculation
+                        const Stone &stone = oldPositions[idx];
+
+                        if (stone.color != Color::OUT_OF_BOUND) {
+                            // std::cout << "DEBUG | Restoring: " << (int)stone.pos.x << "," << (int)stone.pos.y << " color: " << stone.color << std::endl;
+                            searchBoard.board[stone.pos.x][stone.pos.y] = stone.color;
+                        }
+                    }
+                }
             }
 
             void displaySearchBoard() {
@@ -107,10 +144,6 @@ namespace Gomoku {
                                 std::cout << i << "  ";
                         }
                         std::cout << searchBoard.board[i][j] << "  ";
-                        if (searchBoard.board[i][j] == Color::AI_NEW)
-                            searchBoard.board[i][j] = Color::AI;
-                        else if (searchBoard.board[i][j] == Color::ENEMY_NEW)
-                            searchBoard.board[i][j] = Color::ENEMY;
                     }
                     std::cout << std::endl;
                 }
@@ -120,6 +153,7 @@ namespace Gomoku {
             TranspositionTable tt;
             Board board;
             Board searchBoard; // Search board contains each cell to be evaluated
+            std::vector<std::array<Stone, 9>> searchBoardMoves;
             int maxDepth = 4;
 
         protected:
@@ -224,8 +258,7 @@ namespace Gomoku {
                 if (isMaximizing) {
                     bool firstChild = true;
                     for (const auto& move : moves) {
-                        exploratingBoard.board[move.x][move.y] = Color::ENEMY;
-                        //for (uint)
+                        addToSearchBoard(move.x, move.y, 2);
                         board.playMove(move, Color::ENEMY);
                         int res;
                         if (firstChild) {
@@ -237,7 +270,7 @@ namespace Gomoku {
                                 res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, beta);
                             }
                         }
-                        exploratingBoard.board[move.x][move.y] = Color::TO_EXPLORE;
+                        removeFromSearchBoard(move.x, move.y);
                         board.undoMove(move);
                         alpha = std::max(alpha, res);
                     }
@@ -246,7 +279,7 @@ namespace Gomoku {
                 } else {
                     bool firstChild = true;
                     for (const auto& move : moves) {
-                        exploratingBoard.board[move.x][move.y] = Color::AI;
+                        addToSearchBoard(move.x, move.y, 1);
                         board.playMove(move, Color::AI);
                         int res;
                         if (firstChild) {
@@ -258,7 +291,7 @@ namespace Gomoku {
                                 res = principalVariationSearch(exploratingBoard, depth - 1, true, alpha, beta);
                             }
                         }
-                        exploratingBoard.board[move.x][move.y] = Color::TO_EXPLORE;
+                        removeFromSearchBoard(move.x, move.y);
                         board.undoMove(move);
                         beta = std::min(beta, res);
                     }
@@ -312,7 +345,7 @@ namespace Gomoku {
                 << milliseconds << "ms "
                 << microseconds << "µs" << std::endl;
 
-                if (seconds >= 1 && maxDepth > 0)
+                if ((seconds > 0 && maxDepth > 0) || (milliseconds > 500 && maxDepth > 0))
                     maxDepth--;
 
                 std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << " using depth: " << maxDepth + 1 << std::endl;

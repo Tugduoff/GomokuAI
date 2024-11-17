@@ -117,11 +117,15 @@ int Gomoku::Board::checkPattern(Line &line)
         }
         // Check for S4 pattern : +XXXX
         if (fourInRow && isPosEmpty(Position(stone.pos.x - line.dx, stone.pos.y - line.dy))) {
-            return 1000000;
+            if (line.color == Color::ENEMY)
+                return 2000000;
+            return 100000;
         }
         // Check for S4 patterns : X+XXX, XX+XX, XXX+X, XXXX+
         if (checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 5, 1)) {
-            return 1000000;
+            if (line.color == Color::ENEMY)
+                return 2000000;
+            return 100000;
         }
         // Check for D3 pattern : ++XXX+
         if (checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 3) &&
@@ -287,10 +291,6 @@ std::ostream &Gomoku::operator<<(std::ostream &os, const Gomoku::Color &color)
             os << "\033[97m#\033[0m"; break;
         case Color::EMPTY:
             os << "\033[90m+\033[0m"; break;
-        case Color::AI_NEW:
-            os << "\033[92mX\033[0m"; break;
-        case Color::ENEMY_NEW:
-            os << "\033[92mO\033[0m"; break;
         default:
             os << "\033[91m*\033[0m";
     }
