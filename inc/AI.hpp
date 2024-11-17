@@ -10,6 +10,11 @@
     #include <chrono>
     #include <limits>
     #include <TranspositionTable.hpp>
+    #include <thread>
+    #include <mutex>
+    #include <map>
+    #include <future>
+    #include <future>
     #include "Board.hpp"
 
 namespace Gomoku {
@@ -274,33 +279,56 @@ namespace Gomoku {
              */
             Position getBestMove() {
                 int bestScore = std::numeric_limits<int>::min();
+                std::multimap<int, Position, std::greater<int>> bestMoves;
                 Position bestMove;
                 int depth = maxDepth;
+                std::mutex mtx;
 
                 auto getBestMoveStart = std::chrono::high_resolution_clock::now();
-                for (uint8_t x = 0; x < 20; ++x) {
-                    for (uint8_t y = 0; y < 20; ++y) {
-                        if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
-                            searchBoard.board[x][y] = Color::AI;
-                            board.playMove(Position(x, y), Color::AI);
+                std::vector<std::future<void>> futures;
 
-                            int score = principalVariationSearch(searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+                unsigned int numThreads = std::thread::hardware_concurrency();
+                if (numThreads == 0) {
+                    numThreads = 1;
+                }
 
-                            searchBoard.board[x][y] = Color::TO_EXPLORE;
-                            board.undoMove(Position(x, y));
-                            if (score == bestScore) {
-                                if (rand() % 2 == 0) {
-                                    bestScore = score;
-                                    bestMove = Position(x, y);
+                for (unsigned int t = 0; t < numThreads; ++t) {
+                    futures.emplace_back(std::async(std::launch::async, [&, t]() {
+                        for (uint8_t x = t; x < 20; x += numThreads) {
+                            for (uint8_t y = 0; y < 20; ++y) {
+                                if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
+                                    {
+                                        std::lock_guard<std::mutex> lock(mtx);
+                                        searchBoard.board[x][y] = Color::AI;
+                                        board.playMove(Position(x, y), Color::AI);
+
+                                        int score = principalVariationSearch(searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+
+                                        searchBoard.board[x][y] = Color::TO_EXPLORE;
+                                        if (score > bestScore) {
+                                            bestScore = score;
+                                            bestMove = Position(x, y);
+                                        }
+                                        bestMoves.insert(std::make_pair(score, Position(x, y)));
+                                    }
                                 }
-                            } else if (score > bestScore) {
-                                bestScore = score;
-                                bestMove = Position(x, y);
                             }
-
                         }
+                    }));
+                }
+
+                for (auto& future : futures) {
+                    try {
+                        future.get();
+                    } catch (const std::exception& e) {
+                        std::cerr << "DEBUG Exception in thread: " << e.what() << std::endl;
                     }
                 }
+
+                for (auto& move : bestMoves) {
+                    std::cout << "DEBUG Move: " << (int)move.second.x << "," << (int)move.second.y << " with score: " << move.first << std::endl;
+                }
+
                 auto getBestMoveEnd = std::chrono::high_resolution_clock::now();
 
                 auto duration = std::chrono::duration_cast<std::chrono::microseconds>(getBestMoveEnd - getBestMoveStart).count();
@@ -309,16 +337,18 @@ namespace Gomoku {
                 int microseconds = duration % 1'000;
 
                 std::cout << "DEBUG Execution time for getBestMove : " << seconds << "s "
-                << milliseconds << "ms "
-                << microseconds << "µs" << std::endl;
+                          << milliseconds << "ms "
+                          << microseconds << "µs" << std::endl;
 
                 if (seconds >= 1 && maxDepth > 0)
                     maxDepth--;
 
-                std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << " using depth: " << maxDepth + 1 << std::endl;
                 if (bestScore == std::numeric_limits<int>::min()) {
                     bestMove = Position(10, 10);
+                } else {
+                    bestMove = bestMoves.begin()->second;
                 }
+                std::cout << "DEBUG Best move: " << (int)bestMove.x << "," << (int)bestMove.y << std::endl;
                 return bestMove;
             }
     };
