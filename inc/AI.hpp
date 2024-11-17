@@ -62,7 +62,7 @@ namespace Gomoku {
 
                 status = evaluateBoard();
                 addToSearchBoard(x, y, 1);
-                // displaySearchBoard();
+                displaySearchBoard();
 
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
                 std::cout << "DEBUG Status: " << status << std::endl;
@@ -338,11 +338,16 @@ namespace Gomoku {
                                         int score = principalVariationSearch(searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 
                                         searchBoard.board[x][y] = Color::TO_EXPLORE;
-                                        if (score > bestScore) {
+                                        board.undoMove(Position(x, y));
+                                        if (score == bestScore) {
+                                            if (rand() % 2 == 0) {
+                                                bestScore = score;
+                                                bestMoves.insert(std::make_pair(score, Position(x, y)));
+                                            }
+                                        } else if (score > bestScore) {
                                             bestScore = score;
-                                            bestMove = Position(x, y);
+                                            bestMoves.insert(std::make_pair(score, Position(x, y)));
                                         }
-                                        bestMoves.insert(std::make_pair(score, Position(x, y)));
                                     }
                                 }
                             }
@@ -370,18 +375,18 @@ namespace Gomoku {
                 int microseconds = duration % 1'000;
 
                 std::cout << "DEBUG Execution time for getBestMove : " << seconds << "s "
-                          << milliseconds << "ms "
-                          << microseconds << "µs" << std::endl;
+                << milliseconds << "ms "
+                << microseconds << "µs" << std::endl;
 
-                if ((seconds > 0 && maxDepth > 0) || (milliseconds > 500 && maxDepth > 0))
+                if ((seconds > 2 && maxDepth > 0) || (milliseconds > 500 && maxDepth > 0))
                     maxDepth--;
 
+                std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << " using depth: " << maxDepth + 1 << std::endl;
                 if (bestScore == std::numeric_limits<int>::min()) {
                     bestMove = Position(10, 10);
                 } else {
                     bestMove = bestMoves.begin()->second;
                 }
-                std::cout << "DEBUG Best move: " << (int)bestMove.x << "," << (int)bestMove.y << std::endl;
                 return bestMove;
             }
     };
