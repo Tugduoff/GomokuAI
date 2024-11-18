@@ -9,7 +9,8 @@
 
 int main(void) {
     Gomoku::AI ai;
-    Gomoku::CommandHandler handler(ai);
+    Gomoku::Algo algo;
+    Gomoku::CommandHandler handler(ai, algo);
     std::string cmd;
 
     srand(time(NULL));
