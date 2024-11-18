@@ -166,7 +166,7 @@ namespace Gomoku {
             Board searchBoard; // Search board contains each cell to be evaluated
             std::vector<std::array<Stone, 9>> searchBoardMoves;
             int maxDepth = 10;
-            std::array<int, 10> maxCellsForDepth = { 400, 300, 75, 50, 20, 12, 5, 3, 2, 1 };
+            std::array<int, 10> maxCellsForDepth = { 400, 150, 50, 25, 15, 8, 5, 3, 2, 1 };
 
         protected:
         private:
@@ -266,7 +266,7 @@ namespace Gomoku {
                 }
 
                 int score = evaluateBoard();
-                if (depth == 0 || score >= 10000000 || score <= -10000000) {
+                if (depth == 0 || score >= 10000000) {
                     return score;
                 }
 
@@ -274,7 +274,7 @@ namespace Gomoku {
 
                 if (isMaximizing) {
                     bool firstChild = true;
-                    for (const auto& move : moves) {
+                    for (const auto &move : moves) {
                         addToSearchBoard(move.x, move.y, 2);
                         board.playMove(move, Color::ENEMY);
                         int res;
@@ -295,7 +295,7 @@ namespace Gomoku {
                     return alpha;
                 } else {
                     bool firstChild = true;
-                    for (const auto& move : moves) {
+                    for (const auto &move : moves) {
                         addToSearchBoard(move.x, move.y, 1);
                         board.playMove(move, Color::AI);
                         int res;
@@ -343,6 +343,7 @@ namespace Gomoku {
                                 score == std::numeric_limits<int>::min()) {
                                 bestMove = move;
                                 bestScore = score;
+                                std::cout << "DEBUG Found a winning or blocking move" << std::endl;
                                 return bestMove;
                             }
                         }
@@ -389,7 +390,7 @@ namespace Gomoku {
                 << milliseconds << "ms "
                 << microseconds << "µs" << std::endl;
 
-                if ((seconds > 0 && maxDepth > 0) || (milliseconds > 500 && maxDepth > 0)) {
+                if ((seconds > 0 && maxDepth > 0) || (milliseconds > 200 && maxDepth > 0)) {
                     std::cout << "DEBUG Reducing depth" << std::endl;
                     maxDepth--;
                 }

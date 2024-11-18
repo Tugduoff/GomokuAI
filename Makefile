@@ -30,7 +30,7 @@ INCLUDE_PATH = -I ./inc -I ./
 
 ERROR_FLAGS	=	-W -Wall -Wextra -Wshadow
 
-CFLAGS = $(INCLUDE_PATH) $(ERROR_FLAGS) -g
+CFLAGS = $(INCLUDE_PATH) $(ERROR_FLAGS) -O3
 
 NAME	=	pbrain-gomoku-ai
 
@@ -41,7 +41,7 @@ all:
 start:	$(NAME)
 
 $(NAME):	$(OBJ)
-			g++ -o $(NAME) $(OBJ) $(CFLAGS) -lm -std=c++23
+			g++ -o $(NAME) $(OBJ) $(CFLAGS) -std=c++23
 			@echo -e "-----|\e[1;34mdone\e[0;m|-----"
 
 %.o: %.cpp
