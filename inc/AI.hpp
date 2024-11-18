@@ -9,6 +9,8 @@
 
     #include <chrono>
     #include <limits>
+    #include <iostream>
+    #include <array>
     #include <TranspositionTable.hpp>
     #include "Board.hpp"
 
@@ -49,6 +51,15 @@ namespace Gomoku {
                     std::cout << "DEBUG LOSE" << std::endl;
                 }
 
+                int cellsToExplore = searchBoard.count(Color::TO_EXPLORE);
+
+                while (cellsToExplore > maxCellsForDepth[maxDepth]) {
+                    std::cout << "DEBUG Reducing depth" << std::endl;
+                    maxDepth--;
+                }
+                std::cout << "DEBUG Cells to explore: " << cellsToExplore << std::endl;
+                std::cout << "DEBUG Max depth: " << maxDepth + 1 << std::endl;
+
                 Position bestMove = getBestMove();
                 uint8_t x = bestMove.x;
                 uint8_t y = bestMove.y;
@@ -61,7 +72,7 @@ namespace Gomoku {
 
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
                 std::cout << "DEBUG Status: " << status << std::endl;
-                std::cout << "DEBUG Max depth: " << maxDepth << std::endl;
+                std::cout << "DEBUG Max depth: " << maxDepth + 1 << std::endl;
                 if (status >= 10000000) {
                     std::cout << "DEBUG WIN" << std::endl;
                     displaySearchBoard();
@@ -154,7 +165,8 @@ namespace Gomoku {
             Board board;
             Board searchBoard; // Search board contains each cell to be evaluated
             std::vector<std::array<Stone, 9>> searchBoardMoves;
-            int maxDepth = 4;
+            int maxDepth = 10;
+            std::array<int, 10> maxCellsForDepth = { 400, 300, 75, 50, 20, 12, 5, 3, 2, 1 };
 
         protected:
         private:
@@ -345,8 +357,10 @@ namespace Gomoku {
                 << milliseconds << "ms "
                 << microseconds << "µs" << std::endl;
 
-                if ((seconds > 0 && maxDepth > 0) || (milliseconds > 500 && maxDepth > 0))
+                if ((seconds > 0 && maxDepth > 0) || (milliseconds > 500 && maxDepth > 0)) {
+                    std::cout << "DEBUG Reducing depth" << std::endl;
                     maxDepth--;
+                }
 
                 std::cout << "DEBUG Best move found: " << (int)bestMove.x << "," << (int)bestMove.y << " with score: " << bestScore << " using depth: " << maxDepth + 1 << std::endl;
                 if (bestScore == std::numeric_limits<int>::min()) {
