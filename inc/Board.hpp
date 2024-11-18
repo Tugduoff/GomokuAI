@@ -120,6 +120,8 @@ namespace Gomoku {
              */
             bool checkNColorInRowWithTTriggers(const Position &pos, int dx, int dy, const Color &color, int n, int t);
 
+            int count(const Color &color);
+
             Color board[20][20] = { Color::EMPTY };
             std::vector<std::array<Line, 4>> lines;
 

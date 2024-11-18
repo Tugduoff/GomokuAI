@@ -9,6 +9,8 @@
 
     #include <chrono>
     #include <limits>
+    #include <iostream>
+    #include <array>
     #include <TranspositionTable.hpp>
     #include <thread>
     #include <mutex>
@@ -55,6 +57,15 @@ namespace Gomoku {
                     std::cout << "DEBUG LOSE" << std::endl;
                 }
 
+                int cellsToExplore = searchBoard.count(Color::TO_EXPLORE);
+
+                while (cellsToExplore > maxCellsForDepth[maxDepth]) {
+                    std::cout << "DEBUG Reducing depth" << std::endl;
+                    maxDepth--;
+                }
+                std::cout << "DEBUG Cells to explore: " << cellsToExplore << std::endl;
+                std::cout << "DEBUG Max depth: " << maxDepth + 1 << std::endl;
+
                 Position bestMove = getBestMove();
                 uint8_t x = bestMove.x;
                 uint8_t y = bestMove.y;
@@ -67,7 +78,7 @@ namespace Gomoku {
 
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
                 std::cout << "DEBUG Status: " << status << std::endl;
-                std::cout << "DEBUG Max depth: " << maxDepth << std::endl;
+                std::cout << "DEBUG Max depth: " << maxDepth + 1 << std::endl;
                 if (status >= 10000000) {
                     std::cout << "DEBUG WIN" << std::endl;
                     displaySearchBoard();
@@ -160,7 +171,8 @@ namespace Gomoku {
             Board board;
             Board searchBoard; // Search board contains each cell to be evaluated
             std::vector<std::array<Stone, 9>> searchBoardMoves;
-            int maxDepth = 4;
+            int maxDepth = 10;
+            std::array<int, 10> maxCellsForDepth = { 400, 300, 75, 50, 20, 12, 5, 3, 2, 1 };
 
         protected:
         private:
@@ -182,6 +194,11 @@ namespace Gomoku {
 
                 for (auto &lines : board.lines) {
                     for (auto &line : lines) {
+                        if (line.score == std::numeric_limits<int>::max()) {
+                            return std::numeric_limits<int>::max();
+                        } else if (line.score == std::numeric_limits<int>::min()) {
+                            return std::numeric_limits<int>::min();
+                        }
                         score += line.score;
                     }
                 }
@@ -258,7 +275,7 @@ namespace Gomoku {
                 }
 
                 int score = evaluateBoard();
-                if (depth == 0 || score >= 1000000 || score <= -1000000) {
+                if (depth == 0 || score >= 10000000 || score <= -10000000) {
                     return score;
                 }
 
@@ -344,6 +361,48 @@ namespace Gomoku {
                 for (uint8_t x = 0; x < 20; ++x) {
                     for (uint8_t y = 0; y < 20; ++y) {
                         if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
+                            Position move = Position(x, y);
+                            addToSearchBoard(move.x, move.y, (uint8_t)Color::AI);
+                            board.playMove(move, Color::AI);
+
+                            int score = evaluateBoard();
+
+                            removeFromSearchBoard(move.x, move.y);
+                            board.undoMove(move);
+                            if (score == std::numeric_limits<int>::max() ||
+                                score == std::numeric_limits<int>::min()) {
+                                bestMove = move;
+                                bestScore = score;
+                                return bestMove;
+                            }
+                        }
+                    }
+                }
+                for (uint8_t x = 0; x < 20; ++x) {
+                    for (uint8_t y = 0; y < 20; ++y) {
+                        if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
+                            Position move = Position(x, y);
+                            addToSearchBoard(move.x, move.y, (uint8_t)Color::AI);
+                            board.playMove(move, Color::AI);
+
+                            int score = principalVariationSearch(searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+
+                            removeFromSearchBoard(move.x, move.y);
+                            board.undoMove(move);
+                            if (score == bestScore) {
+                                if (rand() % 2 == 0) {
+                                    bestScore = score;
+                                    bestMove = move;
+                                }
+                            } else if (score > bestScore) {
+                                bestScore = score;
+                                bestMove = move;
+                                if (bestScore >= 10000000) {
+                                    break;
+                                }
+                            }
+
+                        }
                             {
                                 std::lock_guard<std::mutex> lock(mtx);
                                 searchBoard.board[x][y] = Color::AI;
@@ -388,6 +447,9 @@ namespace Gomoku {
                     } else if (threadResult.first > bestScore) {
                         bestScore = threadResult.first;
                         bestMoves.insert(std::make_pair(threadResult.first, threadResult.second));
+                    }
+                    if (bestScore >= 10000000) {
+                        break;
                     }
                 }
 

@@ -106,6 +106,7 @@ int Gomoku::Board::checkPattern(Line &line)
 
         // Check for S5 pattern : XXXXX
         if (checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 5)) {
+            std::cout << "DEBUG S5" << std::endl;
             return std::numeric_limits<int>::max();
         }
         bool fourInRow = checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 4);
@@ -281,6 +282,19 @@ Gomoku::Board& Gomoku::Board::operator=(const Board& other)
     lines = other.lines;
 
     return *this;
+}
+
+int Gomoku::Board::count(const Color &color)
+{
+    int count = 0;
+
+    for (uint8_t i = 0; i < 20; ++i) {
+        for (uint8_t j = 0; j < 20; ++j) {
+            if (board[i][j] == color)
+                count++;
+        }
+    }
+    return count;
 }
 
 std::ostream &Gomoku::operator<<(std::ostream &os, const Gomoku::Line &line)
