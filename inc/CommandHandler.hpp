@@ -9,7 +9,7 @@
 
     #include <sstream>
     #include <functional>
-    #include "AI.hpp"
+    #include "Algo.hpp"
 
 namespace Gomoku {
     /**
@@ -19,7 +19,7 @@ namespace Gomoku {
      */
     class CommandHandler {
         public:
-            CommandHandler(Gomoku::AI &ai) : __ai(ai), __commands({
+            CommandHandler(Gomoku::AI &ai, Gomoku::Algo &algo) : __ai(ai), __aiAlgo(algo), __commands({
                 {"START", [this]() { handleStart(); }},
                 {"TURN", [this]() { handleTurn(); }},
                 {"BEGIN", [this]() { handleBegin(); }},
@@ -27,7 +27,7 @@ namespace Gomoku {
                 {"INFO", [this]() { handleInfo(); }},
                 {"ABOUT", [this]() { handleAbout(); }},
                 {"END", [this]() { handleEnd(); }}
-            }) {}
+            }) {};
 
             void execute(const std::string &cmd) {
                 auto it = __commands.find(cmd);
@@ -42,6 +42,7 @@ namespace Gomoku {
         private:
 
             Gomoku::AI &__ai;
+            Gomoku::Algo &__aiAlgo;
             std::unordered_map<std::string, std::function<void()>> __commands;
 
             /**
@@ -98,7 +99,7 @@ namespace Gomoku {
                 std::cout << "DEBUG Enemy played at " << x << "," << y << std::endl;
                 __ai.board.playMove(Position(x, y), Color::ENEMY);
                 __ai.addToSearchBoard((uint8_t)x, (uint8_t)y, 2);
-                __ai.turn();
+                __ai.turn(__aiAlgo.getBestMove());
             }
 
             /**
@@ -110,7 +111,7 @@ namespace Gomoku {
              * BEGIN
              */
             void handleBegin() {
-                __ai.turn();
+                __ai.turn(__aiAlgo.getBestMove());
             }
 
             /**
@@ -158,7 +159,7 @@ namespace Gomoku {
                     __ai.board.playMove(Position(x, y), (Color)color);
                     __ai.addToSearchBoard(x, y, color);
                 }
-                __ai.turn();
+                __ai.turn(__aiAlgo.getBestMove());
             }
 
             /**
