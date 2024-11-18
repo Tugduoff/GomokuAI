@@ -383,26 +383,6 @@ namespace Gomoku {
                         if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
                             Position move = Position(x, y);
                             addToSearchBoard(move.x, move.y, (uint8_t)Color::AI);
-                            board.playMove(move, Color::AI);
-
-                            int score = principalVariationSearch(searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
-
-                            removeFromSearchBoard(move.x, move.y);
-                            board.undoMove(move);
-                            if (score == bestScore) {
-                                if (rand() % 2 == 0) {
-                                    bestScore = score;
-                                    bestMove = move;
-                                }
-                            } else if (score > bestScore) {
-                                bestScore = score;
-                                bestMove = move;
-                                if (bestScore >= 10000000) {
-                                    break;
-                                }
-                            }
-
-                        }
                             {
                                 std::lock_guard<std::mutex> lock(mtx);
                                 searchBoard.board[x][y] = Color::AI;
