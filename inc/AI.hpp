@@ -13,7 +13,8 @@
     #include <thread>
     #include <mutex>
     #include <map>
-    #include <future>
+    #include <queue>
+    #include <condition_variable>
     #include <future>
     #include "Board.hpp"
 
@@ -236,7 +237,9 @@ namespace Gomoku {
              * @param beta : the beta value
              * @return int : the score of the board
              */
-            int principalVariationSearch(Board exploratingBoard, int depth, bool isMaximizing, int alpha, int beta) {
+            int principalVariationSearch(Board exploratingBoard, Board tmpBoard, int depth,
+                bool isMaximizing, int alpha, int beta) {
+
                 uint64_t zobristKey = tt.computeZobristHash(exploratingBoard);
                 auto it = tt.transpositionTable.find(zobristKey);
 
@@ -264,19 +267,19 @@ namespace Gomoku {
                     bool firstChild = true;
                     for (const auto& move : moves) {
                         addToSearchBoard(move.x, move.y, 2);
-                        board.playMove(move, Color::ENEMY);
+                        tmpBoard.playMove(move, Color::ENEMY);
                         int res;
                         if (firstChild) {
-                            res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, beta);
+                            res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, false, alpha, beta);
                             firstChild = false;
                         } else {
-                            res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, alpha + 1);
+                            res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, false, alpha, alpha + 1);
                             if (res > alpha && res < beta) {
-                                res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, beta);
+                                res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, false, alpha, beta);
                             }
                         }
                         removeFromSearchBoard(move.x, move.y);
-                        board.undoMove(move);
+                        tmpBoard.undoMove(move);
                         alpha = std::max(alpha, res);
                     }
                     stockIntoTranspositionTable(zobristKey, depth, alpha, alpha, beta);
@@ -285,24 +288,65 @@ namespace Gomoku {
                     bool firstChild = true;
                     for (const auto& move : moves) {
                         addToSearchBoard(move.x, move.y, 1);
-                        board.playMove(move, Color::AI);
+                        tmpBoard.playMove(move, Color::AI);
                         int res;
                         if (firstChild) {
-                            res = principalVariationSearch(exploratingBoard, depth - 1, true, alpha, beta);
+                            res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, true, alpha, beta);
                             firstChild = false;
                         } else {
-                            res = principalVariationSearch(exploratingBoard, depth - 1, true, beta - 1, beta);
+                            res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, true, beta - 1, beta);
                             if (res > alpha && res < beta) {
-                                res = principalVariationSearch(exploratingBoard, depth - 1, true, alpha, beta);
+                                res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, true, alpha, beta);
                             }
                         }
                         removeFromSearchBoard(move.x, move.y);
-                        board.undoMove(move);
+                        tmpBoard.undoMove(move);
                         beta = std::min(beta, res);
                     }
                     stockIntoTranspositionTable(zobristKey, depth, beta, alpha, beta);
                     return beta;
                 }
+            }
+
+            /**
+             * @brief Thread execution manager
+             *
+             * @param tmpBoard : the board to explore
+             * @param tmpSearchBoard : the search board
+             * @param pos : the position to explore
+             * @param depth : the depth of the search
+             * @param bestScore : the best score
+             * @param bestMoves : the best moves
+             * @param mtx : the mutex
+             * @param cv : the condition variable
+             */
+            void threadExecutionManager(Board tmpBoard, Board tmpSearchBoard,
+                std::pair<uint8_t, uint8_t> pos, int depth, int &bestScore, std::multimap<int, Position,
+                std::greater<int>> &bestMoves, std::mutex &mtx, std::condition_variable &cv) {
+                int score = 0;
+
+                tmpSearchBoard.board[pos.first][pos.second] = Color::AI;
+                tmpBoard.playMove(Position(pos.first, pos.second), Color::AI);
+                {
+                    std::lock_guard<std::mutex> lock(mtx);
+                    score = principalVariationSearch(tmpSearchBoard, tmpBoard, depth,
+                        false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+                }
+                tmpSearchBoard.board[pos.first][pos.second] = Color::TO_EXPLORE;
+                tmpBoard.undoMove(Position(pos.first, pos.second));
+                {
+                    std::lock_guard<std::mutex> lock(mtx);
+                    if (score == bestScore) {
+                        if (rand() % 2 == 0) {
+                            bestScore = score;
+                            bestMoves.insert(std::make_pair(score, Position(pos.first, pos.second)));
+                        }
+                    } else if (score > bestScore) {
+                        bestScore = score;
+                        bestMoves.insert(std::make_pair(score, Position(pos.first, pos.second)));
+                    }
+                }
+                cv.notify_one();
             }
 
             /**
@@ -316,67 +360,46 @@ namespace Gomoku {
                 Position bestMove;
                 int depth = maxDepth;
                 std::mutex mtx;
+                std::condition_variable cv;
+                std::queue<std::future<void>> futures;
 
                 auto getBestMoveStart = std::chrono::high_resolution_clock::now();
-                std::vector<std::future<void>> futures;
 
                 unsigned int numThreads = std::thread::hardware_concurrency();
-                if (numThreads == 0) {
+                if (numThreads == 0)
                     numThreads = 1;
-                }
 
-                for (unsigned int t = 0; t < numThreads; ++t) {
-                    futures.emplace_back(std::async(std::launch::async, [&, t]() {
-                        for (uint8_t x = t; x < 20; x += numThreads) {
-                            for (uint8_t y = 0; y < 20; ++y) {
-                                if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
-                                    {
-                                        std::lock_guard<std::mutex> lock(mtx);
-                                        searchBoard.board[x][y] = Color::AI;
-                                        board.playMove(Position(x, y), Color::AI);
+                for (uint8_t x = 0; x < 20; ++x) {
+                    for (uint8_t y = 0; y < 20; ++y) {
+                        std::cout << "DEBUG | Exploring: " << (int)x << "," << (int)y << std::endl;
+                        if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
+                            Board tmpBoard = board;
+                            Board tmpSearchBoard = searchBoard;
+                            std::pair<uint8_t, uint8_t> pos = std::make_pair(x, y);
+                            std::unique_lock<std::mutex> lock(mtx);
+                            cv.wait(lock, [&futures, numThreads] { return futures.size() < numThreads; });
 
-                                        int score = principalVariationSearch(searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
-
-                                        searchBoard.board[x][y] = Color::TO_EXPLORE;
-                                        board.undoMove(Position(x, y));
-                                        if (score == bestScore) {
-                                            if (rand() % 2 == 0) {
-                                                bestScore = score;
-                                                bestMoves.insert(std::make_pair(score, Position(x, y)));
-                                            }
-                                        } else if (score > bestScore) {
-                                            bestScore = score;
-                                            bestMoves.insert(std::make_pair(score, Position(x, y)));
-                                        }
-                                    }
-                                }
-                            }
+                            futures.push(std::async(std::launch::async, &AI::threadExecutionManager,
+                                this, tmpBoard, tmpSearchBoard, pos, depth, std::ref(bestScore),
+                                std::ref(bestMoves), std::ref(mtx), std::ref(cv)));
                         }
-                    }));
-                }
-
-                for (auto& future : futures) {
-                    try {
-                        future.get();
-                    } catch (const std::exception& e) {
-                        std::cerr << "DEBUG Exception in thread: " << e.what() << std::endl;
                     }
                 }
 
-                for (auto& move : bestMoves) {
-                    std::cout << "DEBUG Move: " << (int)move.second.x << "," << (int)move.second.y << " with score: " << move.first << std::endl;
+                while (!futures.empty()) {
+                    futures.front().get();
+                    futures.pop();
                 }
 
                 auto getBestMoveEnd = std::chrono::high_resolution_clock::now();
-
                 auto duration = std::chrono::duration_cast<std::chrono::microseconds>(getBestMoveEnd - getBestMoveStart).count();
                 int seconds = duration / 1'000'000;
                 int milliseconds = (duration % 1'000'000) / 1'000;
                 int microseconds = duration % 1'000;
 
                 std::cout << "DEBUG Execution time for getBestMove : " << seconds << "s "
-                << milliseconds << "ms "
-                << microseconds << "µs" << std::endl;
+                        << milliseconds << "ms "
+                        << microseconds << "µs" << std::endl;
 
                 if ((seconds > 2 && maxDepth > 0) || (milliseconds > 500 && maxDepth > 0))
                     maxDepth--;
