@@ -106,6 +106,7 @@ int Gomoku::Board::checkPattern(Line &line)
 
         // Check for S5 pattern : XXXXX
         if (checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 5)) {
+            std::cout << "DEBUG S5" << std::endl;
             return std::numeric_limits<int>::max();
         }
         bool fourInRow = checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 4);
