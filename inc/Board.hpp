@@ -22,6 +22,15 @@ namespace Gomoku {
             Board() = default;
             ~Board() = default;
 
+            Board(const Board &other) {
+                for (uint8_t i = 0; i < 20; ++i) {
+                    for (uint8_t j = 0; j < 20; ++j) {
+                        board[i][j] = other.board[i][j];
+                    }
+                }
+                lines = other.lines;
+            }
+
             /**
              * @brief Play a move on the board
              * 
@@ -113,6 +122,8 @@ namespace Gomoku {
 
             Color board[20][20] = { Color::EMPTY };
             std::vector<std::array<Line, 4>> lines;
+
+            Board &operator=(const Board &other);
 
         protected:
         private:

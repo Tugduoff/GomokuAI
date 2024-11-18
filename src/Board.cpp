@@ -267,6 +267,22 @@ bool Gomoku::Board::checkNColorInRowWithTTriggers(const Position &pos, int dx, i
     return (nFound == n - t && tFound == t);
 }
 
+Gomoku::Board& Gomoku::Board::operator=(const Board& other)
+{
+    if (this == &other)
+        return *this;
+
+    for (uint8_t i = 0; i < 20; ++i) {
+        for (uint8_t j = 0; j < 20; ++j) {
+            board[i][j] = other.board[i][j];
+        }
+    }
+
+    lines = other.lines;
+
+    return *this;
+}
+
 std::ostream &Gomoku::operator<<(std::ostream &os, const Gomoku::Line &line)
 {
     os << "Line: " << (line.color == Color::AI ? "AI" : "ENEMY") << " | Dir: " <<
