@@ -48,7 +48,7 @@ namespace Gomoku {
              */
             void turn()
             {
-                // displaySearchBoard();
+                displaySearchBoard();
                 int status = evaluateBoard();
                 std::cout << "DEBUG Status: " << status << std::endl;
                 if (status == std::numeric_limits<int>::max()) {
@@ -73,7 +73,8 @@ namespace Gomoku {
                 board.playMove(bestMove, Color::AI);
 
                 status = evaluateBoard();
-                addToSearchBoard(x, y, 1);
+
+                addToSearchBoard(searchBoardMoves.back(), x, y, 1);
                 displaySearchBoard();
 
                 std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
@@ -89,9 +90,8 @@ namespace Gomoku {
                 std::cout << (int)x << "," << (int)y << std::endl; // Send the move to the game manager
             }
 
-            void addToSearchBoard(uint8_t x, uint8_t y, uint8_t color) {
+            void addToSearchBoard(std::array<Stone, 9> oldPositions, uint8_t x, uint8_t y, uint8_t color) {
                 // Store old colors for each 9 cells
-                std::array<Stone, 9> oldPositions;
 
                 // Store the center position explicitly
                 oldPositions[4] = Stone(Position(x, y), searchBoard.board[x][y]);
@@ -120,9 +120,8 @@ namespace Gomoku {
                 // std::cout << "DEBUG | Added in search board: " << searchBoardMoves.size() << " stone: " << (int)oldPositions[4].pos.x << "," << (int)oldPositions[4].pos.y << std::endl;
             }
 
-            void removeFromSearchBoard(uint8_t x, uint8_t y) {
+            void removeFromSearchBoard(std::array<Stone, 9> oldPositions, uint8_t x, uint8_t y) {
                 // Retrieve the last stored state
-                std::array<Stone, 9> oldPositions = searchBoardMoves.back();
                 searchBoardMoves.pop_back(); // Remove the last element from the stack
                 // std::cout << "DEBUG | Removed from search board: " << searchBoardMoves.size() << std::endl;
 
@@ -254,7 +253,7 @@ namespace Gomoku {
              * @param beta : the beta value
              * @return int : the score of the board
              */
-            int principalVariationSearch(Board exploratingBoard, Board tmpBoard, int depth,
+            int principalVariationSearch(Board &exploratingBoard, Board &tmpBoard, std::vector<std::array<Stone, 9>> &tmpSearchBoardMove, int depth,
                 bool isMaximizing, int alpha, int beta, std::mutex &mtx) {
 
                 uint64_t zobristKey;
@@ -284,19 +283,19 @@ namespace Gomoku {
                 if (isMaximizing) {
                     bool firstChild = true;
                     for (const auto& move : moves) {
-                        addToSearchBoard(move.x, move.y, 2);
+                        addToSearchBoard(tmpSearchBoardMove.back(), move.x, move.y, 2);
                         tmpBoard.playMove(move, Color::ENEMY);
                         int res;
                         if (firstChild) {
-                            res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, false, alpha, beta, mtx);
+                            res = principalVariationSearch(exploratingBoard, tmpBoard, tmpSearchBoardMove, depth - 1, false, alpha, beta, mtx);
                             firstChild = false;
                         } else {
-                            res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, false, alpha, alpha + 1, mtx);
+                            res = principalVariationSearch(exploratingBoard, tmpBoard, tmpSearchBoardMove, depth - 1, false, alpha, alpha + 1, mtx);
                             if (res > alpha && res < beta) {
-                                res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, false, alpha, beta, mtx);
+                                res = principalVariationSearch(exploratingBoard, tmpBoard, tmpSearchBoardMove, depth - 1, false, alpha, beta, mtx);
                             }
                         }
-                        removeFromSearchBoard(move.x, move.y);
+                        removeFromSearchBoard(tmpSearchBoardMove.back(), move.x, move.y);
                         tmpBoard.undoMove(move);
                         alpha = std::max(alpha, res);
                     }
@@ -305,19 +304,19 @@ namespace Gomoku {
                 } else {
                     bool firstChild = true;
                     for (const auto& move : moves) {
-                        addToSearchBoard(move.x, move.y, 1);
+                        addToSearchBoard(tmpSearchBoardMove.back(), move.x, move.y, 1);
                         tmpBoard.playMove(move, Color::AI);
                         int res;
                         if (firstChild) {
-                            res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, true, alpha, beta, mtx);
+                            res = principalVariationSearch(exploratingBoard, tmpBoard, tmpSearchBoardMove, depth - 1, true, alpha, beta, mtx);
                             firstChild = false;
                         } else {
-                            res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, true, beta - 1, beta, mtx);
+                            res = principalVariationSearch(exploratingBoard, tmpBoard, tmpSearchBoardMove, depth - 1, true, beta - 1, beta, mtx);
                             if (res > alpha && res < beta) {
-                                res = principalVariationSearch(exploratingBoard, tmpBoard, depth - 1, true, alpha, beta, mtx);
+                                res = principalVariationSearch(exploratingBoard, tmpBoard, tmpSearchBoardMove, depth - 1, true, alpha, beta, mtx);
                             }
                         }
-                        removeFromSearchBoard(move.x, move.y);
+                        removeFromSearchBoard(tmpSearchBoardMove.back(), move.x, move.y);
                         tmpBoard.undoMove(move);
                         beta = std::min(beta, res);
                     }
@@ -326,17 +325,18 @@ namespace Gomoku {
                 }
             }
 
-            std::pair<int, Position> threadExecutionManager(Board tmpBoard, Board tmpSearchBoard,
-                std::pair<uint8_t, uint8_t> pos, int depth, std::mutex &mtx, std::promise<std::pair<int, Position>> resultPromise) {
+            std::pair<int, Position> threadExecutionManager(Board &tmpBoard, Board &tmpSearchBoard, std::vector<std::array<Stone, 9>> &tmpSearchBoardMove,
+                Position &pos, int &depth, std::mutex &mtx, std::promise<std::pair<int, Position>> resultPromise) {
                 int score = 0;
 
                 {
                     std::lock_guard<std::mutex> lock(mtx);
-                    score = principalVariationSearch(tmpSearchBoard, tmpBoard, depth, false, std::numeric_limits<int>::min(),
+                    score = principalVariationSearch(tmpSearchBoard, tmpBoard, tmpSearchBoardMove, depth, false, std::numeric_limits<int>::min(),
                         std::numeric_limits<int>::max(), mtx);
                 }
-                resultPromise.set_value({score, Position(pos.first, pos.second)});
-                return {score, Position(pos.first, pos.second)};
+                std::cout << "DEBUG Best move found: " << (int)pos.x << "," << (int)pos.y << " with score: " << score << " using depth: " << maxDepth + 1 << std::endl;
+                resultPromise.set_value({score, Position(pos.x, pos.y)});
+                return {score, Position(pos.x, pos.y)};
             }
 
             /**
@@ -348,7 +348,7 @@ namespace Gomoku {
                 int bestScore = std::numeric_limits<int>::min();
                 std::multimap<int, Position, std::greater<int>> bestMoves;
                 Position bestMove = Position(0, 0);
-                int depth = maxDepth;
+                int depth = 1;
                 std::mutex mtx;
                 std::vector<std::thread> threads;
                 std::vector<std::future<std::pair<int, Position>>> futures;
@@ -362,12 +362,13 @@ namespace Gomoku {
                     for (uint8_t y = 0; y < 20; ++y) {
                         if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
                             Position move = Position(x, y);
-                            addToSearchBoard(move.x, move.y, (uint8_t)Color::AI);
+                            std::vector<std::array<Stone, 9>> tmpSearchBoardMove = searchBoardMoves;
+                            addToSearchBoard(tmpSearchBoardMove.back(), x, y, 1);
                             board.playMove(move, Color::AI);
 
                             int score = evaluateBoard();
 
-                            removeFromSearchBoard(move.x, move.y);
+                            removeFromSearchBoard(tmpSearchBoardMove.back(), x, y);
                             board.undoMove(move);
                             if (score == std::numeric_limits<int>::max() ||
                                 score == std::numeric_limits<int>::min()) {
@@ -381,16 +382,16 @@ namespace Gomoku {
                 for (uint8_t x = 0; x < 20; ++x) {
                     for (uint8_t y = 0; y < 20; ++y) {
                         if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
-                            Position move = Position(x, y);
-                            addToSearchBoard(move.x, move.y, (uint8_t)Color::AI);
-                            {
-                                std::lock_guard<std::mutex> lock(mtx);
-                                searchBoard.board[x][y] = Color::AI;
-                                board.playMove(Position(x, y), Color::AI);
-                            }
                             Board tmpBoard = board;
                             Board tmpSearchBoard = searchBoard;
-                            std::pair<uint8_t, uint8_t> pos = std::make_pair(x, y);
+                            std::vector<std::array<Stone, 9>> tmpSearchBoardMove = searchBoardMoves;
+                            Position move = Position(x, y);
+                            addToSearchBoard(tmpSearchBoardMove.back(), x, y, 1);
+                            {
+                                std::lock_guard<std::mutex> lock(mtx);
+                                board.playMove(Position(x, y), Color::AI);
+                            }
+                            Position pos(0,0);
 
                             if (activeThreads >= numThreads) {
                                 for (auto& thread : threads) {
@@ -401,17 +402,16 @@ namespace Gomoku {
                             }
                             std::promise<std::pair<int, Position>> resultPromise;
                             futures.push_back(resultPromise.get_future());
-                            threads.emplace_back(&AI::threadExecutionManager, this, tmpBoard, tmpSearchBoard, pos, depth, std::ref(mtx), std::move(resultPromise));
+                            threads.emplace_back(&AI::threadExecutionManager, this, std::ref(tmpBoard), std::ref(tmpSearchBoard), std::ref(tmpSearchBoardMove), std::ref(pos), std::ref(depth), std::ref(mtx), std::move(resultPromise));
                             ++activeThreads;
+                            removeFromSearchBoard(tmpSearchBoardMove.back(), x, y);
                             {
                                 std::lock_guard<std::mutex> lock(mtx);
-                                searchBoard.board[x][y] = Color::TO_EXPLORE;
                                 board.undoMove(Position(x, y));
                             }
                         }
                     }
                 }
-
                 for (auto& thread : threads) {
                     thread.join();
                 }
