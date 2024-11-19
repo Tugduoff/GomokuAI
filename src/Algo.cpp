@@ -1,19 +1,11 @@
 /*
 ** EPITECH PROJECT, 2024
-** $
+** Gomoku
 ** File description:
 ** Algo
 */
 
 #include "Algo.hpp"
-
-Gomoku::Algo::Algo()
-{
-}
-
-Gomoku::Algo::~Algo()
-{
-}
 
 Gomoku::Position Gomoku::Algo::computeFirstEvaluation(Board &board, Board &searchBoard)
 {

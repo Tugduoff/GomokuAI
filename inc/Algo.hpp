@@ -22,9 +22,9 @@ namespace Gomoku {
      */
     class Algo {
         public:
-            Algo();
+            Algo() = default;
             Algo(Gomoku::AI &ai) : __ai(ai) {};
-            ~Algo();
+            ~Algo() = default;
 
             /**
              * @brief Return the best move for the AI
