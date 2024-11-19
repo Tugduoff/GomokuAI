@@ -23,6 +23,7 @@ namespace Gomoku {
     class Algo {
         public:
             Algo();
+            Algo(Gomoku::AI &ai) : __ai(ai) {};
             ~Algo();
 
             /**
