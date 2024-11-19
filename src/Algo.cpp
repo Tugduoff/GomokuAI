@@ -92,7 +92,8 @@ Gomoku::Position Gomoku::Algo::getBestMove()
                 Position move = Position(x, y);
                 __ai.addToSearchBoard(move.x, move.y, (uint8_t)Color::AI);
                 __ai.board.playMove(move, Color::AI);
-                int score = principalVariationSearch(__ai.searchBoard, depth, false, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+                int score = principalVariationSearch(__ai.searchBoard, depth, false,
+                    std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
                 __ai.removeFromSearchBoard(move.x, move.y);
                 __ai.board.undoMove(move);
                 if (checkScore(bestScore, bestMove, score, move))
@@ -132,7 +133,7 @@ int Gomoku::Algo::principalVariationSearch(Board &exploratingBoard, uint8_t dept
         }
     }
     score = __ai.evaluateBoard();
-    if (depth == 0 || score >= 10000000)
+    if (depth <= 0 || score >= 10000000)
         return score;
     if (isMaximizing) {
         return doMax(exploratingBoard, zobristKey, depth, alpha, beta);
