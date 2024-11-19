@@ -13,6 +13,8 @@ BASE_SRC =
 SRC	=	$(BASE_SRC)							\
 		src/Main.cpp						\
 		src/Board.cpp						\
+		src/Algo.cpp						\
+		src/AI.cpp							\
 
 TEST	=
 
