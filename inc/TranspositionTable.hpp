@@ -25,6 +25,8 @@ namespace Gomoku {
             TranspositionTable() {};
             TranspositionTable(Position pos, uint8_t val, uint8_t dep, uint8_t fl)
                 : position(pos), value(val), depth(dep), flag(fl) {};
+            TranspositionTable(const TranspositionTable &other)
+                : transpositionTable(other.transpositionTable), position(other.position), value(other.value), depth(other.depth), flag(other.flag) {};
             ~TranspositionTable() = default;
 
             bool operator==(const TranspositionTable &other) const {
