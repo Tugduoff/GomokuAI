@@ -85,7 +85,7 @@ Gomoku::Position Gomoku::Algo::getBestMove()
     auto getBestMoveStart = std::chrono::high_resolution_clock::now();
 
     if (firstMove.x != 21 && firstMove.y != 21)
-        return bestMove;
+        return firstMove;
     for (uint8_t x = 0; x < 20; ++x) {
         for (uint8_t y = 0; y < 20; ++y) {
             if (__ai.searchBoard.board[x][y] == Color::TO_EXPLORE) {
