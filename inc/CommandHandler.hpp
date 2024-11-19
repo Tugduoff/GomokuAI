@@ -99,7 +99,7 @@ namespace Gomoku {
                 std::cout << "DEBUG Enemy played at " << x << "," << y << std::endl;
                 __ai.board.playMove(Position(x, y), Color::ENEMY);
                 __ai.addToSearchBoard((uint8_t)x, (uint8_t)y, 2);
-                __ai.turn(__aiAlgo.getBestMove());
+                __ai.turn();
             }
 
             /**
@@ -111,7 +111,7 @@ namespace Gomoku {
              * BEGIN
              */
             void handleBegin() {
-                __ai.turn(__aiAlgo.getBestMove());
+                __ai.turn();
             }
 
             /**
@@ -159,7 +159,7 @@ namespace Gomoku {
                     __ai.board.playMove(Position(x, y), (Color)color);
                     __ai.addToSearchBoard(x, y, color);
                 }
-                __ai.turn(__aiAlgo.getBestMove());
+                __ai.turn();
             }
 
             /**
