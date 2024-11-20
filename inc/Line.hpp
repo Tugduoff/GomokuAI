@@ -35,6 +35,7 @@ namespace Gomoku {
             int8_t dy;
             Color color;
             std::array<Stone, 9> positions;
+            std::vector<Position> triggers;
 
         protected:
         private:
