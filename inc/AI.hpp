@@ -48,8 +48,6 @@ namespace Gomoku {
 
             void displaySearchBoard(Position &pos);
 
-            int crossPatternBonus(Line &first, Line &second);
-
             /**
              * @brief Evaluate the board
              *
@@ -167,7 +165,7 @@ namespace Gomoku {
             Board board;
             Board searchBoard; // Search board contains each cell to be evaluated
             std::vector<std::array<Stone, 9>> searchBoardMoves;
-            int maxDepth = 5;
+            int maxDepth = 2;
             std::array<int, 10> maxCellsForDepth = { 400, 100, 25, 15, 8, 5, 0, 0, 0, 0 };
     };
 };

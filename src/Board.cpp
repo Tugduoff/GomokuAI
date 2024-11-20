@@ -11,6 +11,7 @@
 
 void Gomoku::Board::playMove(const Position &pos, Color color)
 {
+    int crossBonus = 0;
     board[pos.x][pos.y] = color; // Play the move
 
     // Add the new lines and evaluate their score
@@ -59,8 +60,24 @@ void Gomoku::Board::playMove(const Position &pos, Color color)
     newLines[2] = Line(0, 1, 1, (Color)color, std::move(positions[2]));
     newLines[3] = Line(0, 1, -1, (Color)color, std::move(positions[3]));
 
-    for (auto &line : newLines)
+    // Count the number of triggers activated by the new stone, this will be used to compute a new cross bonus
+    for (auto &lineVec : lines) {
+        for (auto &line : lineVec) {
+            for (auto &trigger : line.triggers) {
+                if (trigger == pos) {
+                    crossBonus++;
+                }
+            }
+        }
+    }
+
+    // Evaluate the new lines, add the cross bonus
+    for (auto &line : newLines) {
         line.score = checkPattern(line);
+        if (line.score != std::numeric_limits<int>::min() && line.score != std::numeric_limits<int>::max()) {
+            line.score *= crossBonus;
+        }
+    }
 
     // Update all lines containing the new stone and evaluate their score
     for (auto &line : lines) {
@@ -68,9 +85,9 @@ void Gomoku::Board::playMove(const Position &pos, Color color)
             for (uint8_t j = 0; j < 9; ++j) {
                 if (line[i].positions[j].pos == pos) {
                     line[i].positions[j].color = color;
-                    line[i].score = checkPattern(line[i]);
                 }
             }
+            line[i].score = checkPattern(line[i]);
         }
     }
 
@@ -90,9 +107,9 @@ void Gomoku::Board::undoMove(const Position &pos)
             for (uint8_t j = 0; j < 9; ++j) {
                 if (line[i].positions[j].pos == pos) {
                     line[i].positions[j].color = Color::EMPTY;
-                    line[i].score = checkPattern(line[i]);
                 }
             }
+            line[i].score = checkPattern(line[i]);
         }
     }
 }
@@ -137,6 +154,7 @@ int Gomoku::Board::checkPattern(Line &line)
                 return -2000000;
             return 100000;
         }
+        line.triggers.clear();
         // Check for D3 pattern : ++XXX+ & S3 pattern : ++XXX
         if (checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 3) &&
             isPosEmpty(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
@@ -148,7 +166,7 @@ int Gomoku::Board::checkPattern(Line &line)
                 line.triggers.push_back(Position(stone.pos.x + 3 * line.dx, stone.pos.y + 3 * line.dy));
                 if (line.color == Color::ENEMY)
                     return -100001;
-                return 25000;
+                return 30000;
             }
             // S3 pattern
             if (line.color == Color::ENEMY)
@@ -162,8 +180,9 @@ int Gomoku::Board::checkPattern(Line &line)
             line.triggers.push_back(Position(stone.pos.x - line.dx, stone.pos.y - line.dy));
             if (line.color == Color::ENEMY)
                 return -100001;
-            return 25000;
+            return 30000;
         }
+        line.triggers.clear();
         // Check for S3 patterns : +XXX+, +X+XX, +XX+X
         if (checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 4, 1, line.triggers) &&
             isPosEmpty(Position(stone.pos.x - line.dx, stone.pos.y - line.dy))) {
@@ -172,12 +191,14 @@ int Gomoku::Board::checkPattern(Line &line)
                 return -10001;
             return 10000;
         }
+        line.triggers.clear();
         // Check for S3 patterns : XXX++, XX++X, X++XX, X+XX+, X+X+X, XX+X+
         if (checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 5, 2, line.triggers)) {
             if (line.color == Color::ENEMY)
                 return -10001;
             return 10000;
         }
+        line.triggers.clear();
         // Check for D2 pattern : +++XX+
         if (isPosEmpty(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
             isPosEmpty(Position(stone.pos.x - 2 * line.dx, stone.pos.y - 2 * line.dy)) &&
@@ -187,6 +208,7 @@ int Gomoku::Board::checkPattern(Line &line)
             line.triggers.push_back(Position(stone.pos.x - line.dx, stone.pos.y - line.dy));
             line.triggers.push_back(Position(stone.pos.x - 2 * line.dx, stone.pos.y - 2 * line.dy));
             line.triggers.push_back(Position(stone.pos.x - 3 * line.dx, stone.pos.y - 3 * line.dy));
+            line.triggers.push_back(Position(stone.pos.x + 2 * line.dx, stone.pos.y + 2 * line.dy));
             if (line.color == Color::ENEMY)
                 return -4001;
             return 1000;
@@ -202,6 +224,7 @@ int Gomoku::Board::checkPattern(Line &line)
                 return -4001;
             return 1000;
         }
+        line.triggers.clear();
         // Check for D2 patterns : +XX+++, +X+X++, +X++X+
         if (isPosEmpty(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
             isPosEmpty(Position(stone.pos.x + 5 * line.dx, stone.pos.y + 5 * line.dy)) &&
@@ -211,6 +234,7 @@ int Gomoku::Board::checkPattern(Line &line)
                 return 4001;
             return 1000;
         }
+        line.triggers.clear();
         // Check for S2 pattern : +++XX
         if (checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 2) &&
             isPosEmpty(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
@@ -233,6 +257,7 @@ int Gomoku::Board::checkPattern(Line &line)
                 return -101;
             return 100;
         }
+        line.triggers.clear();
         // Check for S2 patterns : +XX++, +X+X+, +X++X
         if (isPosEmpty(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
             checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 4, 2, line.triggers)) {
@@ -241,13 +266,16 @@ int Gomoku::Board::checkPattern(Line &line)
                 return -101;
             return 100;
         }
+        line.triggers.clear();
         // Check for S2 patterns : XX+++, X+++X, X++X+, X+X++
         if (checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 5, 3, line.triggers)) {
             if (line.color == Color::ENEMY)
                 return -101;
             return 100;
         }
+        line.triggers.clear();
     }
+    line.triggers.clear();
     return 0;
 }
 
@@ -279,6 +307,8 @@ bool Gomoku::Board::checkNColorInRowWithTTriggers(const Position &pos, int dx, i
 {
     int tFound = 0;
     int nFound = 0;
+
+    triggers.clear();
 
     if (isOutOfBound(pos) || isOutOfBound(Position(pos.x + (n - 1) * dx, pos.y + (n - 1) * dy)))
         return false;
@@ -318,6 +348,10 @@ std::ostream &Gomoku::operator<<(std::ostream &os, const Gomoku::Line &line)
         (int)line.dx << "," << (int)line.dy << " | Score: " << line.score << " | Pos: ";
     for (const auto &stone : line.positions) {
         os << stone.color;
+    }
+    os << " | Triggers: ";
+    for (const auto &trigger : line.triggers) {
+        os << "[" << (int)trigger.x << "," << (int)trigger.y << "] ";
     }
     os << std::endl;
     return os;

@@ -135,13 +135,6 @@ int Gomoku::AI::evaluateBoard(bool debug) {
                 return std::numeric_limits<int>::min();
             }
             score += line.score;
-            for (auto &lines2 : board.lines) {
-                for (auto &line2 : lines2) {
-                    if (line2.score == 0)
-                        continue;
-                    score += crossPatternBonus(line, line2);
-                }
-            }
         }
     }
 
@@ -153,19 +146,6 @@ int Gomoku::AI::evaluateBoard(bool debug) {
         }
     }
     return score;
-}
-
-int Gomoku::AI::crossPatternBonus(Line &first, Line &second) {
-    if (first.color != second.color)
-        return 0;
-    for (const auto &trigger : first.triggers) {
-        for (const auto &trigger2 : second.triggers) {
-            if (trigger == trigger2) {
-                return first.score + second.score;
-            }
-        }
-    }
-    return 0;
 }
 
 Gomoku::Position Gomoku::AI::computeFirstEvaluation()
