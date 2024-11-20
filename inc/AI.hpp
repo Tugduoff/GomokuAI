@@ -76,7 +76,7 @@ namespace Gomoku {
              * @param searchBoard : the search board
              * @return Position
              */
-            Position computeFirstEvaluation(Board &board, Board &searchBoard);
+            Position computeFirstEvaluation();
 
             /**
              * @brief Check the score of the move
@@ -93,7 +93,7 @@ namespace Gomoku {
              * @brief Display the execution time of the function getBestMove
              */
             void displayExecutionTime(std::chrono::time_point<std::chrono::high_resolution_clock> start,
-                std::chrono::time_point<std::chrono::high_resolution_clock> end, int &maxDepth);
+                std::chrono::time_point<std::chrono::high_resolution_clock> end);
 
             /**
              * @brief Stock the values into the transposition table

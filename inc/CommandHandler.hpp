@@ -9,7 +9,9 @@
 
     #include <sstream>
     #include <functional>
-    #include "Algo.hpp"
+    #include <iostream>
+    #include <unordered_map>
+    #include "AI.hpp"
 
 namespace Gomoku {
     /**
@@ -19,7 +21,7 @@ namespace Gomoku {
      */
     class CommandHandler {
         public:
-            CommandHandler(Gomoku::AI &ai, Gomoku::Algo &algo) : __ai(ai), __aiAlgo(algo), __commands({
+            CommandHandler(Gomoku::AI &ai) : __ai(ai), __commands({
                 {"START", [this]() { handleStart(); }},
                 {"TURN", [this]() { handleTurn(); }},
                 {"BEGIN", [this]() { handleBegin(); }},
@@ -42,7 +44,6 @@ namespace Gomoku {
         private:
 
             Gomoku::AI &__ai;
-            Gomoku::Algo &__aiAlgo;
             std::unordered_map<std::string, std::function<void()>> __commands;
 
             /**

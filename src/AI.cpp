@@ -5,7 +5,6 @@
 ** AI
 */
 
-#include "Algo.hpp"
 #include "AI.hpp"
 
 void Gomoku::AI::turn()
@@ -152,7 +151,7 @@ int Gomoku::AI::evaluateBoard(bool debug) {
     return score;
 }
 
-Gomoku::Position Gomoku::AI::computeFirstEvaluation(Board &board, Board &searchBoard)
+Gomoku::Position Gomoku::AI::computeFirstEvaluation()
 {
     Position bestMove(21, 21);
 
@@ -196,7 +195,7 @@ bool Gomoku::AI::checkScore(int &bestScore, Position &bestMove, int &score, Posi
 }
 
 void Gomoku::AI::displayExecutionTime(std::chrono::time_point<std::chrono::high_resolution_clock> start,
-    std::chrono::time_point<std::chrono::high_resolution_clock> end, int &maxDepth)
+    std::chrono::time_point<std::chrono::high_resolution_clock> end)
 {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     int seconds = duration / 1'000'000;
@@ -216,7 +215,7 @@ void Gomoku::AI::displayExecutionTime(std::chrono::time_point<std::chrono::high_
 Gomoku::Position Gomoku::AI::getBestMove()
 {
     Position bestMove;
-    Position firstMove = computeFirstEvaluation(board, searchBoard);
+    Position firstMove = computeFirstEvaluation();
     int bestScore = std::numeric_limits<int>::min();
     int depth = maxDepth;
     auto getBestMoveStart = std::chrono::high_resolution_clock::now();
@@ -241,7 +240,7 @@ Gomoku::Position Gomoku::AI::getBestMove()
             break;
     }
     auto getBestMoveEnd = std::chrono::high_resolution_clock::now();
-    displayExecutionTime(getBestMoveStart, getBestMoveEnd, maxDepth);
+    displayExecutionTime(getBestMoveStart, getBestMoveEnd);
     std::cout << "DEBUG Best move found: " << (int)bestMove.x << ","
         << (int)bestMove.y << " with score: " << bestScore << " using depth: "
         << maxDepth + 1 << std::endl;
