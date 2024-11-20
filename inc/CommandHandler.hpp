@@ -159,6 +159,12 @@ namespace Gomoku {
                     __ai.board.playMove(Position(x, y), (Color)color);
                     __ai.addToSearchBoard(x, y, color);
                 }
+                int cellsToExplore = __ai.searchBoard.count(Color::TO_EXPLORE);
+
+                while (cellsToExplore > __ai.maxCellsForDepth[__ai.maxDepth]) {
+                    std::cout << "DEBUG Reducing depth after BOARD" << std::endl;
+                    __ai.maxDepth--;
+                }
                 __ai.turn();
             }
 

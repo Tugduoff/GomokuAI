@@ -67,8 +67,8 @@ namespace Gomoku {
             Board board;
             Board searchBoard; // Search board contains each cell to be evaluated
             std::vector<std::array<Stone, 9>> searchBoardMoves;
-            int maxDepth = 10;
-            std::array<int, 10> maxCellsForDepth = { 400, 150, 50, 25, 15, 8, 5, 3, 2, 1 };
+            int maxDepth = 5;
+            std::array<int, 10> maxCellsForDepth = { 400, 100, 25, 15, 80, 5, 0, 0, 0, 0 };
     };
 };
 
