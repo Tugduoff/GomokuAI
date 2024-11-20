@@ -46,7 +46,9 @@ namespace Gomoku {
 
             void removeFromSearchBoard(uint8_t x, uint8_t y);
 
-            void displaySearchBoard();
+            void displaySearchBoard(Position &pos);
+
+            int crossPatternBonus(Line &first, Line &second);
 
             /**
              * @brief Evaluate the board

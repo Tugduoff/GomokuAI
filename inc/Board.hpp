@@ -109,7 +109,7 @@ namespace Gomoku {
              * @param t : the number of triggers
              * @return bool : true if there are n stones of the same color in a row with t triggers, false otherwise
              */
-            bool checkNColorInRowWithTTriggers(const Position &pos, int dx, int dy, const Color &color, int n, int t);
+            bool checkNColorInRowWithTTriggers(const Position &pos, int dx, int dy, const Color &color, int n, int t, std::vector<Position> &triggers);
 
             int count(const Color &color);
 
