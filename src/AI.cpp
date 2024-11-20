@@ -24,6 +24,10 @@ void Gomoku::AI::turn()
     Position bestMove = getBestMove();
     uint8_t x = bestMove.x;
     uint8_t y = bestMove.y;
+    while (board.board[x][y] != Color::EMPTY) {
+        x = rand() % 20;
+        y = rand() % 20;
+    }
     auto getBestMoveEnd = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(getBestMoveEnd - getBestMoveStart).count();
     int seconds = duration / 1'000'000;
