@@ -19,19 +19,21 @@ void Gomoku::AI::turn()
         std::cout << "DEBUG LOSE" << std::endl;
     }
 
-    int cellsToExplore = searchBoard.count(Color::TO_EXPLORE);
+    std::cout << "DEBUG Max depth: " << maxDepth << std::endl;
 
-    while (cellsToExplore > maxCellsForDepth[maxDepth]) {
-        std::cout << "DEBUG Reducing depth" << std::endl;
-        maxDepth--;
-    }
-    std::cout << "DEBUG Cells to explore: " << cellsToExplore << std::endl;
-    std::cout << "DEBUG Max depth: " << maxDepth + 1 << std::endl;
-
+    auto getBestMoveStart = std::chrono::high_resolution_clock::now();
     Gomoku::Algo algo(*this);
     Position bestMove = algo.getBestMove();
     uint8_t x = bestMove.x;
     uint8_t y = bestMove.y;
+    auto getBestMoveEnd = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(getBestMoveEnd - getBestMoveStart).count();
+    int seconds = duration / 1'000'000;
+
+    if (seconds > 1) {
+        maxDepth--;
+        std::cout << "DEBUG Reducing Depth... " << maxDepth << std::endl;
+    }
 
     board.playMove(bestMove, Color::AI);
 
@@ -41,7 +43,7 @@ void Gomoku::AI::turn()
 
     std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
     std::cout << "DEBUG Status: " << status << std::endl;
-    std::cout << "DEBUG Max depth: " << maxDepth + 1 << std::endl;
+    std::cout << "DEBUG Max depth: " << maxDepth << std::endl;
     if (status >= 10000000) {
         std::cout << "DEBUG WIN" << std::endl;
         displaySearchBoard();

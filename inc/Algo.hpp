@@ -86,7 +86,7 @@ namespace Gomoku {
              * @return int : the score of the board
              */
             int principalVariationSearch(Board &exploratingBoard, uint8_t depth,
-                bool isMaximizing, int alpha, int beta);
+                bool isMaximizing, int alpha, int beta, std::chrono::time_point<std::chrono::high_resolution_clock> &start);
 
             /**
              * @brief Generate the moves to explore for the principalVariationSearch function
@@ -95,6 +95,8 @@ namespace Gomoku {
              * @return std::vector<Position>
              */
             std::vector<Position> generateMoves(Board& boardTmp);
+
+            bool isTimeToStop(std::chrono::time_point<std::chrono::high_resolution_clock> &start);
 
             /**
              * @brief Do the max part of the principalVariationSearch function
@@ -107,7 +109,7 @@ namespace Gomoku {
              * @return int
              */
             int doMax(Board &exploratingBoard, uint64_t &zobristKey, uint8_t depth,
-                int alpha, int beta);
+                int alpha, int beta, std::chrono::time_point<std::chrono::high_resolution_clock> &start);
 
             /**
              * @brief Do the min part of the principalVariationSearch function
@@ -120,11 +122,11 @@ namespace Gomoku {
              * @return int
              */
             int doMin(Board &exploratingBoard, uint64_t &zobristKey, uint8_t depth,
-                int alpha, int beta);
+                int alpha, int beta, std::chrono::time_point<std::chrono::high_resolution_clock> &start);
 
         protected:
         private:
-            AI __ai;
+            Gomoku::AI __ai;
     };
 };
 
