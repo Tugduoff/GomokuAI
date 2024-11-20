@@ -156,6 +156,7 @@ int Gomoku::AI::evaluateBoard(bool debug) {
 Gomoku::Position Gomoku::AI::computeFirstEvaluation()
 {
     Position bestMove(21, 21);
+    Position blockingMove(21, 21);
 
     for (uint8_t x = 0; x < 20; ++x) {
         for (uint8_t y = 0; y < 20; ++y) {
@@ -165,18 +166,34 @@ Gomoku::Position Gomoku::AI::computeFirstEvaluation()
                 board.playMove(move, Color::AI);
 
                 int score = evaluateBoard();
+                if (score == std::numeric_limits<int>::max()) {
+                    bestMove = move;
+                    std::cout << "DEBUG Found a winning move" << std::endl;
+                    removeFromSearchBoard(move.x, move.y);
+                    board.undoMove(move);
+                    return bestMove;
+                }
 
                 removeFromSearchBoard(move.x, move.y);
                 board.undoMove(move);
-                if (score == std::numeric_limits<int>::max() ||
-                    score == std::numeric_limits<int>::min()) {
-                    bestMove = move;
-                    std::cout << "DEBUG Found a winning or blocking move" << std::endl;
-                    return bestMove;
+
+                addToSearchBoard(move.x, move.y, (uint8_t)Color::ENEMY);
+                board.playMove(move, Color::ENEMY);
+
+                score = evaluateBoard();
+                if (score == std::numeric_limits<int>::min()) {
+                    std::cout << "DEBUG losing move score: " << score << std::endl;
+                    blockingMove = move;
+                    std::cout << "DEBUG Found a losing move" << std::endl;
                 }
+
+                removeFromSearchBoard(move.x, move.y);
+                board.undoMove(move);
             }
         }
     }
+    if (blockingMove.x != 21 && blockingMove.y != 21 && bestMove.x == 21 && bestMove.y == 21)
+        return blockingMove;
     return bestMove;
 }
 
@@ -202,7 +219,7 @@ bool Gomoku::AI::checkScore(int &bestScore, Position &bestMove, int &score, Posi
     } else if (score > bestScore) {
         bestScore = score;
         bestMove = move;
-        if (bestScore >= 10000000)
+        if (bestScore == std::numeric_limits<int>::max())
             return true;
     }
     return false;
@@ -302,9 +319,9 @@ int Gomoku::AI::principalVariationSearch(Board &exploratingBoard, uint8_t depth,
         return std::numeric_limits<int>::min();
     }
     score = evaluateBoard();
-    if (depth <= 0 || score >= 10000000)
-        return score;
-
+    if (depth <= 0 || score == std::numeric_limits<int>::max()
+        || score == std::numeric_limits<int>::min())
+            return score;
     if (isMaximizing) {
         return doMax(exploratingBoard, zobristKey, depth, alpha, beta, start);
     } else {
