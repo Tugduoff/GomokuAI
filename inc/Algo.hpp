@@ -13,7 +13,12 @@
     #include <iostream>
     #include <array>
     #include <TranspositionTable.hpp>
-    #include <any>
+    #include <thread>
+    #include <mutex>
+    #include <queue>
+    #include <map>
+    #include <condition_variable>
+    #include <future>
     #include "AI.hpp"
 
 namespace Gomoku {
@@ -23,7 +28,7 @@ namespace Gomoku {
     class Algo {
         public:
             Algo() = default;
-            Algo(Gomoku::AI &ai) : __ai(ai) {};
+            Algo(Gomoku::AI ai) : __ai(ai) {};
             ~Algo() = default;
 
             /**
@@ -86,7 +91,7 @@ namespace Gomoku {
              * @return int : the score of the board
              */
             int principalVariationSearch(Board &exploratingBoard, uint8_t depth,
-                bool isMaximizing, int alpha, int beta);
+                bool isMaximizing, int alpha, int beta, std::mutex &mtx);
 
             /**
              * @brief Generate the moves to explore for the principalVariationSearch function
@@ -107,7 +112,7 @@ namespace Gomoku {
              * @return int
              */
             int doMax(Board &exploratingBoard, uint64_t &zobristKey, uint8_t depth,
-                int alpha, int beta);
+                int alpha, int beta, std::mutex &mtx);
 
             /**
              * @brief Do the min part of the principalVariationSearch function
@@ -120,7 +125,7 @@ namespace Gomoku {
              * @return int
              */
             int doMin(Board &exploratingBoard, uint64_t &zobristKey, uint8_t depth,
-                int alpha, int beta);
+                int alpha, int beta, std::mutex &mtx);
 
         protected:
         private:
