@@ -5,7 +5,6 @@
 ** AI
 */
 
-#include "Algo.hpp"
 #include "AI.hpp"
 
 void Gomoku::AI::turn()
@@ -22,10 +21,13 @@ void Gomoku::AI::turn()
     std::cout << "DEBUG Max depth: " << maxDepth << std::endl;
 
     auto getBestMoveStart = std::chrono::high_resolution_clock::now();
-    Gomoku::Algo algo(*this);
-    Position bestMove = algo.getBestMove();
+    Position bestMove = getBestMove();
     uint8_t x = bestMove.x;
     uint8_t y = bestMove.y;
+    while (board.board[x][y] != Color::EMPTY) {
+        x = rand() % 20;
+        y = rand() % 20;
+    }
     auto getBestMoveEnd = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(getBestMoveEnd - getBestMoveStart).count();
     int seconds = duration / 1'000'000;
@@ -154,3 +156,268 @@ int Gomoku::AI::evaluateBoard(bool debug) {
     }
     return score;
 }
+
+Gomoku::Position Gomoku::AI::computeFirstEvaluation()
+{
+    Position bestMove(21, 21);
+    Position blockingMove(21, 21);
+
+    for (uint8_t x = 0; x < 20; ++x) {
+        for (uint8_t y = 0; y < 20; ++y) {
+            if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
+                Position move = Position(x, y);
+                addToSearchBoard(move.x, move.y, (uint8_t)Color::AI);
+                board.playMove(move, Color::AI);
+
+                int score = evaluateBoard();
+                if (score == std::numeric_limits<int>::max()) {
+                    bestMove = move;
+                    std::cout << "DEBUG Found a winning move" << std::endl;
+                    removeFromSearchBoard(move.x, move.y);
+                    board.undoMove(move);
+                    return bestMove;
+                }
+
+                removeFromSearchBoard(move.x, move.y);
+                board.undoMove(move);
+
+                addToSearchBoard(move.x, move.y, (uint8_t)Color::ENEMY);
+                board.playMove(move, Color::ENEMY);
+
+                score = evaluateBoard();
+                if (score == std::numeric_limits<int>::min()) {
+                    std::cout << "DEBUG losing move score: " << score << std::endl;
+                    blockingMove = move;
+                    std::cout << "DEBUG Found a losing move" << std::endl;
+                }
+
+                removeFromSearchBoard(move.x, move.y);
+                board.undoMove(move);
+            }
+        }
+    }
+    if (blockingMove.x != 21 && blockingMove.y != 21 && bestMove.x == 21 && bestMove.y == 21)
+        return blockingMove;
+    return bestMove;
+}
+
+bool Gomoku::AI::checkScore(int &bestScore, Position &bestMove, int &score, Position &move)
+{
+    if (score == std::numeric_limits<int>::min()) {
+        if (bestMove.x >= 20 && bestMove.y >= 20) {
+            while (board.board[move.x][move.y] != Color::EMPTY) {
+                move.x = rand() % 20;
+                move.y = rand() % 20;
+            }
+            bestMove = move;
+        }
+        maxDepth--;
+        std::cout << "DEBUG Time to stop checkScore: " << maxDepth << std::endl;
+        return true;
+    }
+    if (score == bestScore) {
+        if (rand() % 2 == 0) {
+            bestScore = score;
+            bestMove = move;
+        }
+    } else if (score > bestScore) {
+        bestScore = score;
+        bestMove = move;
+        if (bestScore == std::numeric_limits<int>::max())
+            return true;
+    }
+    return false;
+}
+
+void Gomoku::AI::displayExecutionTime(std::chrono::time_point<std::chrono::high_resolution_clock> start,
+    std::chrono::time_point<std::chrono::high_resolution_clock> end)
+{
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    int seconds = duration / 1'000'000;
+    int milliseconds = (duration % 1'000'000) / 1'000;
+    int microseconds = duration % 1'000;
+
+    std::cout << "DEBUG Execution time for getBestMove : " << seconds << "s "
+    << milliseconds << "ms "
+    << microseconds << "µs" << std::endl;
+
+    if ((seconds > 0 && maxDepth > 0) || (milliseconds > 200 && maxDepth > 0)) {
+        std::cout << "DEBUG Reducing depth" << std::endl;
+        maxDepth--;
+    }
+}
+
+bool Gomoku::AI::isTimeToStop(std::chrono::time_point<std::chrono::high_resolution_clock> &start)
+{
+    auto getBestMoveEnd = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(getBestMoveEnd - start).count();
+    int seconds = duration / 1'000'000;
+
+    if (seconds > 3) {
+        std::cout << "DEBUG Time to stop: " << maxDepth << std::endl;
+        return true;
+    }
+    return false;
+}
+
+Gomoku::Position Gomoku::AI::getBestMove()
+{
+    Position bestMove;
+    Position firstMove = computeFirstEvaluation();
+    int bestScore = std::numeric_limits<int>::min();
+    auto getBestMoveStart = std::chrono::high_resolution_clock::now();
+
+    if (firstMove.x != 21 && firstMove.y != 21)
+        return firstMove;
+    for (uint8_t x = 0; x < 20; ++x) {
+        for (uint8_t y = 0; y < 20; ++y) {
+            if (searchBoard.board[x][y] == Color::TO_EXPLORE) {
+                if (isTimeToStop(getBestMoveStart)) {
+                    maxDepth--;
+                    std::cout << "DEBUG Time to stop getBestMove: " << maxDepth << std::endl;
+                    return bestMove;
+                }
+                Position move = Position(x, y);
+                addToSearchBoard(move.x, move.y, (uint8_t)Color::AI);
+                board.playMove(move, Color::AI);
+                int score = principalVariationSearch(searchBoard, maxDepth, false,
+                    std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), getBestMoveStart);
+                removeFromSearchBoard(move.x, move.y);
+                board.undoMove(move);
+                if (checkScore(bestScore, bestMove, score, move))
+                    return bestMove;
+            }
+        }
+    }
+    auto getBestMoveEnd = std::chrono::high_resolution_clock::now();
+    displayExecutionTime(getBestMoveStart, getBestMoveEnd);
+    std::cout << "DEBUG Best move found: " << (int)bestMove.x << ","
+        << (int)bestMove.y << " with score: " << bestScore << " using depth: "
+        << maxDepth << std::endl;
+    if (bestScore == std::numeric_limits<int>::min())
+        bestMove = Position(10, 10);
+    return bestMove;
+}
+
+int Gomoku::AI::principalVariationSearch(Board &exploratingBoard, uint8_t depth,
+    bool isMaximizing, int alpha, int beta, std::chrono::time_point<std::chrono::high_resolution_clock> &start)
+{
+    uint64_t zobristKey = tt.computeZobristHash(exploratingBoard);
+    auto it = tt.transpositionTable.find(zobristKey);
+    int score = 0;
+
+    if (it != tt.transpositionTable.end()) {
+        const TranspositionTable& entry = it->second;
+        if (entry.depth >= depth) {
+            if (entry.flag == 0) {
+                return entry.value;
+            } else if (entry.flag == -1 && entry.value <= alpha) {
+                return entry.value;
+            } else if (entry.flag == 1 && entry.value >= beta) {
+                return entry.value;
+            }
+        }
+    }
+
+    if (isTimeToStop(start)) {
+        return std::numeric_limits<int>::min();
+    }
+    score = evaluateBoard();
+    if (depth <= 0 || score == std::numeric_limits<int>::max()
+        || score == std::numeric_limits<int>::min())
+            return score;
+    if (isMaximizing) {
+        return doMax(exploratingBoard, zobristKey, depth, alpha, beta, start);
+    } else {
+        return doMin(exploratingBoard, zobristKey, depth, alpha, beta, start);
+    }
+}
+
+int Gomoku::AI::doMax(Board &exploratingBoard, uint64_t &zobristKey,
+    uint8_t depth, int alpha, int beta, std::chrono::time_point<std::chrono::high_resolution_clock> &start)
+{
+    bool firstChild = true;
+    std::vector<Position> moves = generateMoves(exploratingBoard);
+
+    for (const auto &move : moves) {
+        addToSearchBoard(move.x, move.y, 2);
+         board.playMove(move, Color::ENEMY);
+        int res;
+        if (firstChild) {
+            res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, beta, start);
+            firstChild = false;
+        } else {
+            res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, alpha + 1, start);
+            if (res > alpha && res < beta) {
+                res = principalVariationSearch(exploratingBoard, depth - 1, false, alpha, beta, start);
+            }
+        }
+         removeFromSearchBoard(move.x, move.y);
+         board.undoMove(move);
+        alpha = std::max(alpha, res);
+        if (res == std::numeric_limits<int>::min())
+            return res;
+    }
+    stockIntoTranspositionTable(zobristKey, depth, alpha, alpha, beta);
+    return alpha;
+}
+
+int Gomoku::AI::doMin(Board &exploratingBoard, uint64_t &zobristKey,
+    uint8_t depth, int alpha, int beta, std::chrono::time_point<std::chrono::high_resolution_clock> &start)
+{
+    bool firstChild = true;
+    std::vector<Position> moves = generateMoves(exploratingBoard);
+
+    for (const auto &move : moves) {
+        addToSearchBoard(move.x, move.y, 1);
+        board.playMove(move, Color::AI);
+        int res;
+        if (firstChild) {
+            res = principalVariationSearch(exploratingBoard, depth - 1, true, alpha, beta, start);
+            firstChild = false;
+        } else {
+            res = principalVariationSearch(exploratingBoard, depth - 1, true, beta - 1, beta, start);
+            if (res > alpha && res < beta) {
+                res = principalVariationSearch(exploratingBoard, depth - 1, true, alpha, beta, start);
+            }
+        }
+        removeFromSearchBoard(move.x, move.y);
+        board.undoMove(move);
+        beta = std::min(beta, res);
+        if (res == std::numeric_limits<int>::min())
+            return res;
+    }
+    stockIntoTranspositionTable(zobristKey, depth, beta, alpha, beta);
+    return beta;
+}
+
+std::vector<Gomoku::Position> Gomoku::AI::generateMoves(Board &boardTmp)
+{
+    std::vector<Position> moves;
+
+    for (uint8_t x = 0; x < 20; ++x) {
+        for (uint8_t y = 0; y < 20; ++y) {
+            if (boardTmp.board[x][y] == Color::TO_EXPLORE)
+                moves.push_back(Position(x, y));
+        }
+    }
+    return moves;
+}
+
+void Gomoku::AI::stockIntoTranspositionTable(uint64_t &zobristKey, uint8_t &depth,
+    int &bestValue, int &alpha, int &beta)
+{
+    TranspositionTable entry;
+
+    entry.value = bestValue;
+    entry.depth = depth;
+    if (bestValue <= alpha) {
+        entry.flag = -1;
+    } else if (bestValue >= beta) {
+        entry.flag = 1;
+    } else {
+        entry.flag = 0;
+    }
+    tt.transpositionTable[zobristKey] = entry;
+}
+
