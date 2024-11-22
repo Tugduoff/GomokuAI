@@ -54,6 +54,9 @@ namespace Gomoku {
                     int S3_pattern_pl;
                     int D2_pattern_pl;
                     int S2_pattern_pl;
+
+                    int timeStop;
+                    int maxDepth;
             };
 
             /**
