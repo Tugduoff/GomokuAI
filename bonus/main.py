@@ -39,7 +39,7 @@ def evaluate_individual(individual):
         f"{individual['timeStop']} {individual['max_depth']}"
     )
     result = subprocess.run(
-        ["./liskvork-0.4.3-x86_64-linux-musl", params],
+        ["../liskvork-0.4.3-x86_64-linux-musl", params],
         capture_output=True,
         text=True
     )

@@ -69,7 +69,7 @@ namespace Gomoku {
 
             void removeFromSearchBoard(uint8_t x, uint8_t y);
 
-            void displaySearchBoard();
+            void displaySearchBoard(Position &pos);
 
             /**
              * @brief Evaluate the board
