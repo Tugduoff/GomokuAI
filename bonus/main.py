@@ -38,12 +38,10 @@ def evaluate_individual(individual):
         f"{individual['D2_pattern_pl']} {individual['S2_pattern_pl']} "
         f"{individual['timeStop']} {individual['max_depth']}"
     )
-    result = subprocess.run(
-        ["../liskvork-0.4.3-x86_64-linux-musl", params],
-        capture_output=True,
-        text=True
-    )
-    return float(result.stdout)
+    with open('../tests/tt', 'r') as input_file:
+        result = subprocess.run(["./pbrain-gomoku-ai", params], stdin=input_file, capture_output=True, text=True)
+    print(result.returncode)
+    return result.returncode
 
 def crossover(parent1, parent2):
     child = {}
@@ -68,7 +66,7 @@ def genetic_algorithm(generations=20, population_size=10):
 
     for generation in range(generations):
         scores = [(ind, evaluate_individual(ind)) for ind in population]
-        scores.sort(key=lambda x: x[1], reverse=True) 
+        scores.sort(key=lambda x: x[1])
         population = [ind for ind, _ in scores[:population_size // 2]]
         new_population = []
 

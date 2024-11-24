@@ -5,10 +5,13 @@
 ** Main
 */
 
+#include <string>
 #include "CommandHandler.hpp"
 
-int main(void) {
-    Gomoku::AI ai;
+int main(int ac, char **av) {
+    Gomoku::AI ai(std::atoi(av[1]), std::atoi(av[2]), std::atoi(av[3]), std::atoi(av[4]),
+        std::atoi(av[5]), std::atoi(av[6]), std::atoi(av[7]), std::atoi(av[8]), std::atoi(av[9]),
+        std::atoi(av[10]), std::atoi(av[11]), std::atoi(av[12]), std::atoi(av[13]), std::atoi(av[14]));
     Gomoku::CommandHandler handler(ai);
     std::string cmd;
 
