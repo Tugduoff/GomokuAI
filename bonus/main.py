@@ -29,17 +29,17 @@ def generate_individual():
     }
 
 def evaluate_individual(individual):
-    params = (
-        f"{individual['D4_pattern_ai']} {individual['S4_pattern_ai']} "
-        f"{individual['D3_pattern_ai']} {individual['S3_pattern_ai']} "
-        f"{individual['D2_pattern_ai']} {individual['S2_pattern_ai']} "
-        f"{individual['D4_pattern_pl']} {individual['S4_pattern_pl']} "
-        f"{individual['D3_pattern_pl']} {individual['S3_pattern_pl']} "
-        f"{individual['D2_pattern_pl']} {individual['S2_pattern_pl']} "
-        f"{individual['timeStop']} {individual['max_depth']}"
-    )
+    params = [
+        str(individual['D4_pattern_ai']), str(individual['S4_pattern_ai']),
+        str(individual['D3_pattern_ai']), str(individual['S3_pattern_ai']),
+        str(individual['D2_pattern_ai']), str(individual['S2_pattern_ai']),
+        str(individual['D4_pattern_pl']), str(individual['S4_pattern_pl']),
+        str(individual['D3_pattern_pl']), str(individual['S3_pattern_pl']),
+        str(individual['D2_pattern_pl']), str(individual['S2_pattern_pl']),
+        str(individual['timeStop']), str(individual['max_depth'])
+    ]
     with open('../tests/tt', 'r') as input_file:
-        result = subprocess.run(["./pbrain-gomoku-ai", params], stdin=input_file, capture_output=True, text=True)
+        result = subprocess.run(["./pbrain-gomoku-ai"] + params, stdin=input_file, capture_output=True, text=True)
     print(result.returncode)
     return result.returncode
 
