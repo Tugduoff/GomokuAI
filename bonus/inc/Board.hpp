@@ -9,6 +9,7 @@
     #define BOARD_HPP_
 
     #include <vector>
+    #include <array>
     #include "Line.hpp"
 
 namespace Gomoku {
@@ -19,8 +20,16 @@ namespace Gomoku {
      */
     class Board {
         public:
-            Board() = default;
+            Board() {
+                initLines();
+            };
             ~Board() = default;
+
+            enum Status {
+                WIN = 1000000,
+                LOSE = -1000000,
+                ONGOING = 0
+            };
 
             /**
              * @brief Play a move on the board
@@ -109,12 +118,18 @@ namespace Gomoku {
              * @param t : the number of triggers
              * @return bool : true if there are n stones of the same color in a row with t triggers, false otherwise
              */
-            bool checkNColorInRowWithTTriggers(const Position &pos, int dx, int dy, const Color &color, int n, int t, std::vector<Position> &triggers);
+            bool checkNColorInRowWithTTriggers(const Position &pos, int dx, int dy, const Color &color, int n, int t);
 
             int count(const Color &color);
 
+            void initLines();
+
             Color board[20][20] = { Color::EMPTY };
-            std::vector<std::array<Line, 4>> lines;
+            std::array<std::array<Line, 4>, 400> boardLines;
+            std::vector<Line> uniqueLines;
+            Status status = ONGOING;
+            std::vector<std::array<Stone, 9>> boardMoves;
+            Stone lastMove;
 
         protected:
         private:

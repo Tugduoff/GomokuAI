@@ -33,6 +33,33 @@ namespace Gomoku {
         protected:
         private:
     };
+
+    /**
+     * @brief Hash function for Position
+     * 
+     * Provides a way to hash a Position for use in unordered containers.
+     */
+    struct PositionHash {
+        std::size_t operator()(const Position &pos) const noexcept {
+            // Combine the hash of x and y using XOR and bit-shifting
+            std::size_t xHash = std::hash<int>()(pos.x);
+            std::size_t yHash = std::hash<int>()(pos.y);
+            return xHash ^ (yHash << 1);
+        }
+    };
+
 };
+
+namespace std {
+    /**
+     * @brief std::hash specialization for Gomoku::Position
+     */
+    template <>
+    struct hash<Gomoku::Position> {
+        std::size_t operator()(const Gomoku::Position &pos) const noexcept {
+            return Gomoku::PositionHash()(pos);
+        }
+    };
+}
 
 #endif // POSITION_HPP_

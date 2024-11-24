@@ -30,12 +30,25 @@ namespace Gomoku {
                 score(lineScore), dx(lineDx), dy(lineDy), color(lineColor), positions(linePositions) {};
             ~Line() = default;
 
+            // Operator ==
+            bool operator==(const Line &line) const {
+                bool samePositions = false;
+                Stone center = positions[4]; // If center stone is contained in the line, the line is the same
+                for (const auto &stone : line.positions) {
+                    if (stone.pos == center.pos) {
+                        samePositions = true;
+                        break;
+                    }
+                }
+                return (line.score == score && line.dx == dx && line.dy == dy && line.color == color && samePositions);
+            }
+
             int score;
             int8_t dx;
             int8_t dy;
             Color color;
             std::array<Stone, 9> positions;
-            std::vector<Position> triggers;
+            bool dirty = false;
 
         protected:
         private:
