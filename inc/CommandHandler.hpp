@@ -91,14 +91,13 @@ namespace Gomoku {
                     return;
                 }
 
-                if (__ai.board.board[(uint8_t)x][(uint8_t)y] != Color::EMPTY) {
+                if (__ai.board.board[(uint8_t)x][(uint8_t)y] != Color::EMPTY && __ai.board.board[(uint8_t)x][(uint8_t)y] != Color::TO_EXPLORE) {
                     std::cout << "ERROR Position already played" << std::endl;
                     return;
                 }
 
                 std::cout << "DEBUG Enemy played at " << x << "," << y << std::endl;
                 __ai.board.playMove(Position(x, y), Color::ENEMY);
-                __ai.addToSearchBoard((uint8_t)x, (uint8_t)y, 2);
                 __ai.turn();
             }
 
@@ -156,10 +155,17 @@ namespace Gomoku {
                         std::cout << "ERROR Invalid board data format." << std::endl;
                         continue;
                     }
-                    __ai.board.playMove(Position(x, y), (Color)color);
-                    __ai.addToSearchBoard(x, y, color);
+                    Position pos(x, y);
+
+                    __ai.board.playMove(pos, (Color)color);
+                    // __ai.displayBoard(pos, (Color)color);
+                    // __ai.evaluateBoard(true);
+                    __ai.board.lastMove = Stone(pos, (Color)color);
                 }
-                int cellsToExplore = __ai.searchBoard.count(Color::TO_EXPLORE);
+                std::cout << "DEBUG Done received" << std::endl;
+                __ai.displayBoard(__ai.board.lastMove.pos, __ai.board.lastMove.color);
+
+                int cellsToExplore = __ai.board.count(Color::TO_EXPLORE);
 
                 while (cellsToExplore > __ai.maxCellsForDepth[__ai.maxDepth]) {
                     std::cout << "DEBUG Reducing depth after BOARD" << std::endl;

@@ -42,11 +42,7 @@ namespace Gomoku {
              */
             void turn();
 
-            void addToSearchBoard(uint8_t x, uint8_t y, uint8_t color);
-
-            void removeFromSearchBoard(uint8_t x, uint8_t y);
-
-            void displaySearchBoard(Position &pos);
+            void displayBoard(const Position &pos, Color color);
 
             /**
              * @brief Evaluate the board
@@ -87,13 +83,12 @@ namespace Gomoku {
              * @param move : the move
              * @return bool
              */
-            bool checkScore(int &bestScore, Position &bestMove, int &score, Position &move);
+            bool checkScore(int &bestScore, Position &bestMove, int &score, const Position &move);
 
             /**
              * @brief Display the execution time of the function getBestMove
              */
-            void displayExecutionTime(std::chrono::time_point<std::chrono::high_resolution_clock> start,
-                std::chrono::time_point<std::chrono::high_resolution_clock> end);
+            void displayExecutionTime();
 
             /**
              * @brief Stock the values into the transposition table
@@ -121,8 +116,7 @@ namespace Gomoku {
              * @param beta : the beta value
              * @return int : the score of the board
              */
-            int principalVariationSearch(Board &exploratingBoard, uint8_t depth,
-                bool isMaximizing, int alpha, int beta, std::chrono::time_point<std::chrono::high_resolution_clock> &start);
+            int minimax(uint8_t depth, bool isMaximizing, int alpha, int beta);
 
             /**
              * @brief Generate the moves to explore for the principalVariationSearch function
@@ -144,8 +138,7 @@ namespace Gomoku {
              * @param beta
              * @return int
              */
-            int doMax(Board &exploratingBoard, uint64_t &zobristKey, uint8_t depth,
-                int alpha, int beta, std::chrono::time_point<std::chrono::high_resolution_clock> &start);
+            int doMax(uint8_t depth, int alpha, int beta);
 
             /**
              * @brief Do the min part of the principalVariationSearch function
@@ -157,16 +150,17 @@ namespace Gomoku {
              * @param beta
              * @return int
              */
-            int doMin(Board &exploratingBoard, uint64_t &zobristKey, uint8_t depth,
-                int alpha, int beta, std::chrono::time_point<std::chrono::high_resolution_clock> &start);
+            int doMin(uint8_t depth, int alpha, int beta);
+
+            bool isTimeOver() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() > timeLimit; }
 
             // Attributes
             TranspositionTable tt;
             Board board;
-            Board searchBoard; // Search board contains each cell to be evaluated
-            std::vector<std::array<Stone, 9>> searchBoardMoves;
-            int maxDepth = 2;
-            std::array<int, 10> maxCellsForDepth = { 400, 100, 25, 15, 8, 5, 0, 0, 0, 0 };
+            int maxDepth = 3;
+            std::array<int, 10> maxCellsForDepth = { 400, 400, 150, 50, 25, 12, 5, 0, 0, 0 };
+            std::chrono::time_point<std::chrono::high_resolution_clock> start;
+            int timeLimit = 4500;
     };
 };
 

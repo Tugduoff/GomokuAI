@@ -9,6 +9,7 @@
     #define STONE_HPP_
 
     #include <iostream>
+    #include <functional>
     #include "Position.hpp"
 
 /**
@@ -40,6 +41,10 @@ namespace Gomoku {
             Stone(Position stonePos, Color stoneColor) : pos(stonePos), color(stoneColor) {};
             ~Stone() = default;
 
+            bool operator==(const Stone &other) const {
+                return pos == other.pos && color == other.color;
+            }
+
             Position pos;
             Color color;
 
@@ -57,6 +62,30 @@ namespace Gomoku {
      * @return std::ostream &The output stream
      */
     std::ostream &operator<<(std::ostream &os, const Color &color);
+
+    /**
+     * @brief Hash specialization for Stone
+     */
+    struct StoneHash {
+        std::size_t operator()(const Stone &stone) const noexcept {
+            // Combine the hash of the position and the color
+            std::size_t posHash = std::hash<Position>()(stone.pos);
+            std::size_t colorHash = std::hash<int>()(static_cast<int>(stone.color));
+            return posHash ^ (colorHash << 1); // XOR the hashes and shift
+        }
+    };
+};
+
+namespace std {
+    /**
+     * @brief std::hash specialization for Gomoku::Stone
+     */
+    template <>
+    struct hash<Gomoku::Stone> {
+        std::size_t operator()(const Gomoku::Stone &stone) const noexcept {
+            return Gomoku::StoneHash()(stone); // Reuse StoneHash
+        }
+    };
 };
 
 #endif // STONE_HPP_
