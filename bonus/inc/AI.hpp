@@ -36,29 +36,6 @@ namespace Gomoku {
              */
             ~AI() = default;
 
-            class individual {
-                public:
-                    individual() = default;
-                    ~individual() = default;
-
-                    int D4_pattern_ai;
-                    int S4_pattern_ai;
-                    int D3_pattern_ai;
-                    int S3_pattern_ai;
-                    int D2_pattern_ai;
-                    int S2_pattern_ai;
-
-                    int D4_pattern_pl;
-                    int S4_pattern_pl;
-                    int D3_pattern_pl;
-                    int S3_pattern_pl;
-                    int D2_pattern_pl;
-                    int S2_pattern_pl;
-
-                    int timeStop;
-                    int maxDepth;
-            };
-
             /**
              * @brief Turn of the AI
              * Coordinates are given by the bot for the next move

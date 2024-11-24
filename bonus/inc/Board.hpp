@@ -124,12 +124,36 @@ namespace Gomoku {
 
             void initLines();
 
+            class Individual {
+                public:
+                    Individual() = default;
+                    ~Individual() = default;
+
+                    int D4_pattern_ai;
+                    int S4_pattern_ai;
+                    int D3_pattern_ai;
+                    int S3_pattern_ai;
+                    int D2_pattern_ai;
+                    int S2_pattern_ai;
+
+                    int D4_pattern_pl;
+                    int S4_pattern_pl;
+                    int D3_pattern_pl;
+                    int S3_pattern_pl;
+                    int D2_pattern_pl;
+                    int S2_pattern_pl;
+
+                    int timeStop;
+                    int maxDepth;
+            };
+
             Color board[20][20] = { Color::EMPTY };
             std::array<std::array<Line, 4>, 400> boardLines;
             std::vector<Line> uniqueLines;
             Status status = ONGOING;
             std::vector<std::array<Stone, 9>> boardMoves;
             Stone lastMove;
+            Individual individual;
 
         protected:
         private:
