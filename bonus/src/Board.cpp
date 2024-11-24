@@ -217,20 +217,20 @@ int Gomoku::Board::checkPattern(Line &line)
             fourInRow && idx <= 4) {
             // Fill the triggers
             if (line.color == Color::ENEMY)
-                return -2000000;
-            return 1000000;
+                return individual.D4_pattern_pl;
+            return individual.D4_pattern_ai;
         }
         // Check for S4 pattern : +XXXX : max .....XXXX
         if (isPosEmptyCached(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) && fourInRow && idx <= 5) {
             if (line.color == Color::ENEMY)
-                return -2000000;
-            return 100000;
+                return individual.S4_pattern_pl;
+            return individual.S4_pattern_ai;
         }
         // Check for S4 patterns : X+XXX, XX+XX, XXX+X, XXXX+ : max ....X+XXX, ....XX+XX, ....XXX+X, ....XXXX+
         if (idx <= 4 && checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 5, 1)) {
             if (line.color == Color::ENEMY)
-                return -2000000;
-            return 100000;
+                return individual.S4_pattern_pl;
+            return individual.S4_pattern_ai;
         }
         // Check for D3 pattern : ++XXX+ & S3 pattern : ++XXX : max .....XXX+ & ......XXX
         if (checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 3) &&
@@ -239,34 +239,34 @@ int Gomoku::Board::checkPattern(Line &line)
             // D3 pattern
             if (isPosEmptyCached(Position(stone.pos.x + 3 * line.dx, stone.pos.y + 3 * line.dy)) && idx <= 5) {
                 if (line.color == Color::ENEMY)
-                    return -150001;
-                return 30000;
+                    return individual.D3_pattern_pl;
+                return individual.D3_pattern_ai;
             }
             // S3 pattern
             if (line.color == Color::ENEMY)
-                return -20000;
-            return 10000;
+                return individual.S3_pattern_pl;
+            return individual.S3_pattern_ai;
         }
         // Check for D3 patterns : +XXX++, +XX+X+, +X+XX+ : max ....XXX++, ....XX+X+, ....X+XX+
         if (idx <= 4 && isPosEmptyCached(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
             isPosEmptyCached(Position(stone.pos.x + 5 * line.dx, stone.pos.y + 4 * line.dy)) &&
             checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 5, 2)) {
             if (line.color == Color::ENEMY)
-                return -150001;
-            return 30000;
+                return individual.D3_pattern_pl;
+            return individual.D3_pattern_ai;
         }
         // Check for S3 patterns : +XXX+, +X+XX, +XX+X : max .....XXX+, .....X+XX, .....XX+X
         if (idx <= 5 && checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 4, 1) &&
             isPosEmptyCached(Position(stone.pos.x - line.dx, stone.pos.y - line.dy))) {
             if (line.color == Color::ENEMY)
-                return -20000;
-            return 10000;
+                return individual.S3_pattern_pl;
+            return individual.S3_pattern_ai;
         }
         // Check for S3 patterns : XXX++, XX++X, X++XX, X+XX+, X+X+X, XX+X+ : max ....XXX++, ....XX++X, ....X++XX, ....X+XX+, ....X+X+X, ....XX+X+
         if (idx <= 4 && checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 5, 2)) {
             if (line.color == Color::ENEMY)
-                return -20000;
-            return 10000;
+                return individual.S3_pattern_pl;
+            return individual.S3_pattern_ai;
         }
         // Check for D2 pattern : +++XX+ : max ......XX+
         if (idx <= 6 && isPosEmptyCached(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
@@ -275,8 +275,8 @@ int Gomoku::Board::checkPattern(Line &line)
             isPosEmptyCached(Position(stone.pos.x + 2 * line.dx, stone.pos.y + 2 * line.dy)) &&
             checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 2)) {
             if (line.color == Color::ENEMY)
-                return -10000;
-            return 2000;
+                return individual.D2_pattern_pl;
+            return individual.D2_pattern_ai;
         }
         // Check for D2 patterns : ++XX++, ++X+X+ : max .....XX++, .....X+X+
         if (idx <= 5 && isPosEmptyCached(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
@@ -284,16 +284,16 @@ int Gomoku::Board::checkPattern(Line &line)
             isPosEmptyCached(Position(stone.pos.x + 5 * line.dx, stone.pos.y + 5 * line.dy)) &&
             checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 4, 2)) {
             if (line.color == Color::ENEMY)
-                return -10000;
-            return 2000;
+                return individual.D2_pattern_pl;
+            return individual.D2_pattern_ai;
         }
         // Check for D2 patterns : +XX+++, +X+X++, +X++X+ : max ....XX+++, ....X+X++, ....X++X+
         if (idx <= 4 && isPosEmptyCached(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
             isPosEmptyCached(Position(stone.pos.x + 5 * line.dx, stone.pos.y + 5 * line.dy)) &&
             checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 5, 3)) {
             if (line.color == Color::ENEMY)
-                return -10000;
-            return 2000;
+                return individual.D2_pattern_pl;
+            return individual.D2_pattern_ai;
         }
         // Check for S2 pattern : +++XX : max .......XX
         if (idx <= 7 && checkNColorInRow(stone.pos, line.dx, line.dy, line.color, 2) &&
@@ -301,29 +301,29 @@ int Gomoku::Board::checkPattern(Line &line)
             isPosEmptyCached(Position(stone.pos.x - 2 * line.dx, stone.pos.y - 2 * line.dy)) &&
             isPosEmptyCached(Position(stone.pos.x - 3 * line.dx, stone.pos.y - 3 * line.dy))) {
             if (line.color == Color::ENEMY)
-                return -1001;
-            return 500;
+                return individual.S2_pattern_pl;
+            return individual.S2_pattern_ai;
         }
         // Check for S2 patterns : ++XX+, ++X+X : max ......XX+, ......X+X
         if (idx <= 6 && isPosEmptyCached(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
             isPosEmptyCached(Position(stone.pos.x - 2 * line.dx, stone.pos.y - 2 * line.dy)) &&
             checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 3, 1)) {
             if (line.color == Color::ENEMY)
-                return -1001;
-            return 500;
+                return individual.S2_pattern_pl;
+            return individual.S2_pattern_ai;
         }
         // Check for S2 patterns : +XX++, +X+X+, +X++X : max .....XX++, .....X+X+, .....X++X
         if (idx <= 5 && isPosEmptyCached(Position(stone.pos.x - line.dx, stone.pos.y - line.dy)) &&
             checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 4, 2)) {
             if (line.color == Color::ENEMY)
-                return -1001;
-            return 500;
+                return individual.S2_pattern_pl;
+            return individual.S2_pattern_ai;
         }
         // Check for S2 patterns : XX+++, X+++X, X++X+, X+X++
         if (idx <= 4 && checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 5, 3)) {
             if (line.color == Color::ENEMY)
-                return -1001;
-            return 500;
+                return individual.S2_pattern_pl;
+            return individual.S2_pattern_ai;
         }
     }
     return 0;

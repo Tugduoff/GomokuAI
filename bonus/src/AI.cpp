@@ -9,12 +9,25 @@
 
 void Gomoku::AI::turn()
 {
+    static int nbrTurn = 0;
     int score = evaluateBoard();
+    //int tmp = checkGameStatus();
+    //if (tmp != 0) {
+    //    std::cout << "DEBUG Status: " << tmp << std::endl;
+    //    if (tmp == -1) {
+    //        std::cout << "DEBUG LOSE" << std::endl;
+    //    } else {
+    //        std::cout << "DEBUG WIN" << std::endl;
+    //    }
+    //    return;
+    //}
     std::cout << "DEBUG Status: " << score << std::endl;
     if (score == std::numeric_limits<int>::max()) {
         std::cout << "DEBUG WIN" << std::endl;
+        exit(nbrTurn);
     } else if (score == std::numeric_limits<int>::min()) {
         std::cout << "DEBUG LOSE" << std::endl;
+        exit(401);
     }
 
     std::cout << "DEBUG Max depth: " << maxDepth << std::endl;
@@ -26,7 +39,7 @@ void Gomoku::AI::turn()
     board.playMove(bestMove, Color::AI);
 
     score = evaluateBoard();
-    // displayBoard(bestMove, Color::AI);
+    displayBoard(bestMove, Color::AI);
 
     std::cout << "DEBUG Player played at " << (int)x << "," << (int)y << std::endl;
     std::cout << "DEBUG Status: " << score << std::endl;
@@ -34,11 +47,14 @@ void Gomoku::AI::turn()
     if (score == std::numeric_limits<int>::max()) {
         std::cout << "DEBUG WIN" << std::endl;
         displayBoard(bestMove, Color::AI);
+        exit(nbrTurn);
     } else if (score == std::numeric_limits<int>::min()) {
         std::cout << "DEBUG LOSE" << std::endl;
         displayBoard(bestMove, Color::AI);
+        exit(401);
     }
     std::cout << (int)x << "," << (int)y << std::endl;
+    nbrTurn++;
 }
 
 void Gomoku::AI::displayBoard(const Position &pos, Color color)
@@ -66,6 +82,45 @@ void Gomoku::AI::displayBoard(const Position &pos, Color color)
     }
 }
 
+int Gomoku::AI::checkGameStatus() {
+    const int size = 20;
+    static int nbrTurn = 0;
+    const int winCondition = 5;
+
+    nbrTurn++;
+    std::cout << "DEBUG Count: " << nbrTurn << std::endl;
+    auto checkLine = [&](int x, int y, int dx, int dy, Gomoku::Color color) -> bool {
+        int count = 0;
+        for (int i = 0; i < winCondition; ++i) {
+            int nx = x + i * dx;
+            int ny = y + i * dy;
+            if (nx >= 0 && nx < size && ny >= 0 && ny < size && board.board[nx][ny] == color) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        return count == winCondition;
+    };
+    for (int x = 0; x < size; ++x) {
+        for (int y = 0; y < size; ++y) {
+            if (board.board[x][y] == Gomoku::Color::ENEMY || board.board[x][y] == Gomoku::Color::AI) {
+                Gomoku::Color currentColor = board.board[x][y];
+                if (checkLine(x, y, 1, 0, currentColor) ||
+                    checkLine(x, y, 0, 1, currentColor) ||
+                    checkLine(x, y, 1, 1, currentColor) ||
+                    checkLine(x, y, 1, -1, currentColor))
+                {
+                    int tmp = currentColor == Gomoku::Color::ENEMY ? 401 : nbrTurn;
+                    exit(tmp);
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 int Gomoku::AI::evaluateBoard(bool debug) {
     int score = 0;
 
@@ -82,10 +137,12 @@ int Gomoku::AI::evaluateBoard(bool debug) {
     for (auto &line : board.uniqueLines) {
         if (line.score == std::numeric_limits<int>::max()) {
             board.status = Board::WIN;
+            std::cout << "DEBUG Found a winning line" << std::endl;
             return line.score;
         }
         if (line.score == std::numeric_limits<int>::min()) {
             board.status = Board::LOSE;
+            std::cout << "DEBUG Found a losing line" << std::endl;
             return line.score;
         }
         score += line.score;

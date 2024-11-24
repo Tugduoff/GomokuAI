@@ -26,8 +26,10 @@ namespace Gomoku {
              * @brief Construct a new AI object
              *
              */
-            AI() {
-                tt.initializeZobristTable();
+            AI(int mDepth, int tStop, int D4_pl, int S4_pl, int D3_pl, int S3_pl, int D2_pl,
+                int S2_pl, int D4_ai, int S4_ai, int D3_ai, int S3_ai, int D2_ai, int S2_ai) {
+                    Board tmp(mDepth, tStop, D4_pl, S4_pl, D3_pl, S3_pl, D2_pl, S2_pl, D4_ai, S4_ai, D3_ai, S3_ai, D2_ai, S2_ai);
+                    tt.initializeZobristTable();
             };
 
             /**
@@ -35,29 +37,6 @@ namespace Gomoku {
              *
              */
             ~AI() = default;
-
-            class individual {
-                public:
-                    individual() = default;
-                    ~individual() = default;
-
-                    int D4_pattern_ai;
-                    int S4_pattern_ai;
-                    int D3_pattern_ai;
-                    int S3_pattern_ai;
-                    int D2_pattern_ai;
-                    int S2_pattern_ai;
-
-                    int D4_pattern_pl;
-                    int S4_pattern_pl;
-                    int D3_pattern_pl;
-                    int S3_pattern_pl;
-                    int D2_pattern_pl;
-                    int S2_pattern_pl;
-
-                    int timeStop;
-                    int maxDepth;
-            };
 
             /**
              * @brief Turn of the AI
@@ -174,6 +153,8 @@ namespace Gomoku {
              * @return int
              */
             int doMin(uint8_t depth, int alpha, int beta);
+
+            int checkGameStatus();
 
             bool isTimeOver() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() > timeLimit; }
 

@@ -29,21 +29,19 @@ def generate_individual():
     }
 
 def evaluate_individual(individual):
-    params = (
-        f"{individual['D4_pattern_ai']} {individual['S4_pattern_ai']} "
-        f"{individual['D3_pattern_ai']} {individual['S3_pattern_ai']} "
-        f"{individual['D2_pattern_ai']} {individual['S2_pattern_ai']} "
-        f"{individual['D4_pattern_pl']} {individual['S4_pattern_pl']} "
-        f"{individual['D3_pattern_pl']} {individual['S3_pattern_pl']} "
-        f"{individual['D2_pattern_pl']} {individual['S2_pattern_pl']} "
-        f"{individual['timeStop']} {individual['max_depth']}"
-    )
-    result = subprocess.run(
-        ["../liskvork-0.4.3-x86_64-linux-musl", params],
-        capture_output=True,
-        text=True
-    )
-    return float(result.stdout)
+    params = [
+        str(individual['D4_pattern_ai']), str(individual['S4_pattern_ai']),
+        str(individual['D3_pattern_ai']), str(individual['S3_pattern_ai']),
+        str(individual['D2_pattern_ai']), str(individual['S2_pattern_ai']),
+        str(individual['D4_pattern_pl']), str(individual['S4_pattern_pl']),
+        str(individual['D3_pattern_pl']), str(individual['S3_pattern_pl']),
+        str(individual['D2_pattern_pl']), str(individual['S2_pattern_pl']),
+        str(individual['timeStop']), str(individual['max_depth'])
+    ]
+    with open('../tests/tt', 'r') as input_file:
+        result = subprocess.run(["./pbrain-gomoku-ai"] + params, stdin=input_file, capture_output=True, text=True)
+    print(result.returncode)
+    return result.returncode
 
 def crossover(parent1, parent2):
     child = {}
@@ -68,7 +66,7 @@ def genetic_algorithm(generations=20, population_size=10):
 
     for generation in range(generations):
         scores = [(ind, evaluate_individual(ind)) for ind in population]
-        scores.sort(key=lambda x: x[1], reverse=True) 
+        scores.sort(key=lambda x: x[1])
         population = [ind for ind, _ in scores[:population_size // 2]]
         new_population = []
 

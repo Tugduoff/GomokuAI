@@ -20,8 +20,24 @@ namespace Gomoku {
      */
     class Board {
         public:
-            Board() {
-                initLines();
+            Board() = default;
+            Board(int maxDepth, int timeStop, int D4_pl, int S4_pl, int D3_pl, int S3_pl, int D2_pl,
+                int S2_pl, int D4_ai, int S4_ai, int D3_ai, int S3_ai, int D2_ai, int S2_ai) {
+                    initLines();
+                    individual.D4_pattern_pl = D4_pl;
+                    individual.S4_pattern_pl = S4_pl;
+                    individual.D3_pattern_pl = D3_pl;
+                    individual.S3_pattern_pl = S3_pl;
+                    individual.D2_pattern_pl = D2_pl;
+                    individual.S2_pattern_pl = S2_pl;
+                    individual.D4_pattern_ai = D4_ai;
+                    individual.S4_pattern_ai = S4_ai;
+                    individual.D3_pattern_ai = D3_ai;
+                    individual.S3_pattern_ai = S3_ai;
+                    individual.D2_pattern_ai = D2_ai;
+                    individual.S2_pattern_ai = S2_ai;
+                    individual.timeStop = timeStop;
+                    individual.maxDepth = maxDepth;
             };
             ~Board() = default;
 
@@ -124,12 +140,36 @@ namespace Gomoku {
 
             void initLines();
 
+            class Individual {
+                public:
+                    Individual() = default;
+                    ~Individual() = default;
+
+                    int D4_pattern_ai;
+                    int S4_pattern_ai;
+                    int D3_pattern_ai;
+                    int S3_pattern_ai;
+                    int D2_pattern_ai;
+                    int S2_pattern_ai;
+
+                    int D4_pattern_pl;
+                    int S4_pattern_pl;
+                    int D3_pattern_pl;
+                    int S3_pattern_pl;
+                    int D2_pattern_pl;
+                    int S2_pattern_pl;
+
+                    int timeStop;
+                    int maxDepth;
+            };
+
             Color board[20][20] = { Color::EMPTY };
             std::array<std::array<Line, 4>, 400> boardLines;
             std::vector<Line> uniqueLines;
             Status status = ONGOING;
             std::vector<std::array<Stone, 9>> boardMoves;
             Stone lastMove;
+            Individual individual;
 
         protected:
         private:
