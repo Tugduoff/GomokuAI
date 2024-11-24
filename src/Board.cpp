@@ -239,7 +239,7 @@ int Gomoku::Board::checkPattern(Line &line)
             // D3 pattern
             if (isPosEmptyCached(Position(stone.pos.x + 3 * line.dx, stone.pos.y + 3 * line.dy)) && idx <= 5) {
                 if (line.color == Color::ENEMY)
-                    return -100001;
+                    return -150001;
                 return 30000;
             }
             // S3 pattern
@@ -252,7 +252,7 @@ int Gomoku::Board::checkPattern(Line &line)
             isPosEmptyCached(Position(stone.pos.x + 5 * line.dx, stone.pos.y + 4 * line.dy)) &&
             checkNColorInRowWithTTriggers(stone.pos, line.dx, line.dy, line.color, 5, 2)) {
             if (line.color == Color::ENEMY)
-                return -100001;
+                return -150001;
             return 30000;
         }
         // Check for S3 patterns : +XXX+, +X+XX, +XX+X : max .....XXX+, .....X+XX, .....XX+X
